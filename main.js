@@ -8,21 +8,21 @@ let authToken = localStorage.getItem('authToken') || null;
 // RENDER POPULAR STOCKS (for home page)
 // ==============================
 function renderPopularStocks() {
-    if (!elements.stockList) return;
-    elements.stockList.innerHTML = "";
-    const topStocks = stocks.slice(0, 3);
-    topStocks.forEach(stock => {
-        const li = document.createElement("li");
-        const leftSpan = document.createElement("span");
-        leftSpan.className = "stock-symbol";
-        leftSpan.textContent = `${stock.symbol || stock.ticker} – ${stock.company || stock.name}`;
-        const rightSpan = document.createElement("span");
-        rightSpan.className = "stock-price";
-        rightSpan.textContent = `$${(stock.price || 0).toFixed(2)}`;
-        li.appendChild(leftSpan);
-        li.appendChild(rightSpan);
-        elements.stockList.appendChild(li);
-    });
+  if (!elements.stockList) return;
+  elements.stockList.innerHTML = "";
+  const topStocks = stocks.slice(0, 3);
+  topStocks.forEach(stock => {
+    const li = document.createElement("li");
+    const leftSpan = document.createElement("span");
+    leftSpan.className = "stock-symbol";
+    leftSpan.textContent = `${stock.symbol || stock.ticker} – ${stock.company || stock.name}`;
+    const rightSpan = document.createElement("span");
+    rightSpan.className = "stock-price";
+    rightSpan.textContent = `$${(stock.price || 0).toFixed(2)}`;
+    li.appendChild(leftSpan);
+    li.appendChild(rightSpan);
+    elements.stockList.appendChild(li);
+  });
 }
 
 
@@ -30,58 +30,58 @@ function renderPopularStocks() {
 // RENDER MARKET TABLE (for market.html)
 // ==============================
 function renderTable(data = stocks) {
-    if (!elements.tableBody) return;
-    
-    elements.tableBody.innerHTML = "";
-    
-    data.forEach((stock) => {
-        const row = document.createElement("tr");
-        row.addEventListener("click", () => showDetails(stock));
-        
-        // Create all cells (same as before)
-        const cells = [
-            stock.symbol,
-            stock.company,
-            stock.sector,
-            stock.price.toFixed(2),
-            stock.change.toFixed(2),
-            (stock.percentChange.toFixed(2) + "%")
-        ];
-        
-        cells.forEach((content, i) => {
-            const td = document.createElement("td");
-            if (i >= 4) { // change/percent columns
-                const value = i === 4 ? stock.change : stock.percentChange;
-                td.className = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
-            }
-            td.textContent = content;
-            row.appendChild(td);
-        });
-        
-        // Actions
-        const actionsTd = document.createElement("td");
-        actionsTd.className = "actions-cell";
-        actionsTd.innerHTML = `
+  if (!elements.tableBody) return;
+
+  elements.tableBody.innerHTML = "";
+
+  data.forEach((stock) => {
+    const row = document.createElement("tr");
+    row.addEventListener("click", () => showDetails(stock));
+
+    // Create all cells (same as before)
+    const cells = [
+      stock.symbol,
+      stock.company,
+      stock.sector,
+      stock.price.toFixed(2),
+      stock.change.toFixed(2),
+      (stock.percentChange.toFixed(2) + "%")
+    ];
+
+    cells.forEach((content, i) => {
+      const td = document.createElement("td");
+      if (i >= 4) { // change/percent columns
+        const value = i === 4 ? stock.change : stock.percentChange;
+        td.className = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
+      }
+      td.textContent = content;
+      row.appendChild(td);
+    });
+
+    // Actions
+    const actionsTd = document.createElement("td");
+    actionsTd.className = "actions-cell";
+    actionsTd.innerHTML = `
             <button class="btn btn-buy" onclick="event.stopPropagation(); handleBuy('${stock.symbol}')">Buy</button>
             <button class="btn btn-sell" onclick="event.stopPropagation(); handleSell('${stock.symbol}')">Sell</button>
         `;
-        row.appendChild(actionsTd);
-        
-        elements.tableBody.appendChild(row);
-    });
+    row.appendChild(actionsTd);
+
+    elements.tableBody.appendChild(row);
+  });
 }
 
 // ==============================
 // RENDER ADMIN TABLE
 // ==============================
 function renderAdminTable(data = stocks) {
-    if (!elements.adminTableBody) return;
-    
-    elements.adminTableBody.innerHTML = "";
-    
-    data.forEach((stock, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
+  if (!elements.adminTableBody) return;
+
+  elements.adminTableBody.innerHTML = "";
+
+  data.forEach((stock, index) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
             <td><strong>${stock.symbol}</strong></td>
             <td>${stock.company}</td>
             <td>${stock.sector}</td>
@@ -97,101 +97,107 @@ function renderAdminTable(data = stocks) {
                 <button class="btn-delete" onclick="deleteStock(${index})">Delete</button>
             </td>
         `;
-        elements.adminTableBody.appendChild(row);
-    });
+    elements.adminTableBody.appendChild(row);
+  });
 }
 
 // ==============================
 // ADMIN FUNCTIONS
 // ==============================
 function updateStockCount() {
-    if (elements.stockCount) {
-        elements.stockCount.textContent = stocks.length;
-    }
+  if (elements.stockCount) {
+    elements.stockCount.textContent = stocks.length;
+  }
 }
 
 async function deleteStock(index) {
-    if (confirm(`Delete ${stocks[index].symbol}?`)) {
-        try {
-            const response = await fetch(`/api/admin/stocks/${stocks[index].symbol}`, {
-                method: 'DELETE',
-                headers: { 'Content-Type': 'application/json', 
-                          ...(authToken && { 'Authorization': `Bearer ${authToken}` }) }
-            });
-            if (!response.ok) throw new Error('Failed to delete');
-            await loadStocks();
-            alert("Stock deleted!");
-        } catch (error) {
-            console.error('Delete error:', error);
-            alert('Error deleting stock.');
+  if (confirm(`Delete ${stocks[index].symbol}?`)) {
+    try {
+      const response = await fetch(`/api/admin/stocks/${stocks[index].symbol}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
         }
+      });
+      if (!response.ok) throw new Error('Failed to delete');
+      await loadStocks();
+      alert("Stock deleted!");
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Error deleting stock.');
     }
+  }
 }
 
 
 function editStock(index) {
-    const stock = stocks[index];
-    if (elements.symbolInput) elements.symbolInput.value = stock.symbol;
-    if (elements.companyInput) elements.companyInput.value = stock.company;
-    if (elements.sectorInput) elements.sectorInput.value = stock.sector;
-    if (elements.priceInput) elements.priceInput.value = stock.price;
-    if (elements.changeInput) elements.changeInput.value = stock.change;
-    if (elements.percentInput) elements.percentInput.value = stock.percentChange;
-    
-    if (elements.addStockForm) {
-        elements.addStockForm.querySelector('button[type="submit"]').textContent = "Update Stock";
-        elements.addStockForm.dataset.editingIndex = index;
-    }
+  const stock = stocks[index];
+  if (elements.symbolInput) elements.symbolInput.value = stock.symbol;
+  if (elements.companyInput) elements.companyInput.value = stock.company;
+  if (elements.sectorInput) elements.sectorInput.value = stock.sector;
+  if (elements.priceInput) elements.priceInput.value = stock.price;
+  if (elements.changeInput) elements.changeInput.value = stock.change;
+  if (elements.percentInput) elements.percentInput.value = stock.percentChange;
+
+  if (elements.addStockForm) {
+    elements.addStockForm.querySelector('button[type="submit"]').textContent = "Update Stock";
+    elements.addStockForm.dataset.editingIndex = index;
+  }
 }
 
 async function initAdminForm() {
-    if (!elements.addStockForm) return;
-    elements.addStockForm.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const editingIndex = elements.addStockForm.dataset.editingIndex;
-        if (!elements.symbolInput?.value || !elements.companyInput?.value || 
-            !elements.sectorInput?.value || !elements.priceInput?.value || 
-            !elements.changeInput?.value || !elements.percentInput?.value) {
-            alert("Please fill in all fields.");
-            return;
-        }
-        const stockData = {
-            symbol: elements.symbolInput.value.toUpperCase(),
-            company: elements.companyInput.value,
-            sector: elements.sectorInput.value,
-            price: parseFloat(elements.priceInput.value),
-            change: parseFloat(elements.changeInput.value),
-            percentChange: parseFloat(elements.percentInput.value)
-        };
-        try {
-            if (editingIndex !== undefined) {
-                const response = await fetch(`/api/admin/stocks/${stockData.symbol}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json', 
-                              ...(authToken && { 'Authorization': `Bearer ${authToken}` }) },
-                    body: JSON.stringify(stockData)
-                });
-                if (!response.ok) throw new Error('Failed to update');
-                alert("Stock updated!");
-            } else {
-                const response = await fetch('/api/admin/stocks', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 
-                              ...(authToken && { 'Authorization': `Bearer ${authToken}` }) },
-                    body: JSON.stringify(stockData)
-                });
-                if (!response.ok) throw new Error('Failed to create');
-                alert("Stock added!");
-            }
-            await loadStocks();
-            elements.addStockForm.reset();
-            elements.addStockForm.querySelector('button[type="submit"]').textContent = "Add Stock";
-            delete elements.addStockForm.dataset.editingIndex;
-        } catch (error) {
-            console.error('Admin form error:', error);
-            alert('Error saving stock.');
-        }
-    });
+  if (!elements.addStockForm) return;
+  elements.addStockForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+    const editingIndex = elements.addStockForm.dataset.editingIndex;
+    if (!elements.symbolInput?.value || !elements.companyInput?.value ||
+      !elements.sectorInput?.value || !elements.priceInput?.value ||
+      !elements.changeInput?.value || !elements.percentInput?.value) {
+      alert("Please fill in all fields.");
+      return;
+    }
+    const stockData = {
+      symbol: elements.symbolInput.value.toUpperCase(),
+      company: elements.companyInput.value,
+      sector: elements.sectorInput.value,
+      price: parseFloat(elements.priceInput.value),
+      change: parseFloat(elements.changeInput.value),
+      percentChange: parseFloat(elements.percentInput.value)
+    };
+    try {
+      if (editingIndex !== undefined) {
+        const response = await fetch(`/api/admin/stocks/${stockData.symbol}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          },
+          body: JSON.stringify(stockData)
+        });
+        if (!response.ok) throw new Error('Failed to update');
+        alert("Stock updated!");
+      } else {
+        const response = await fetch('/api/admin/stocks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
+          },
+          body: JSON.stringify(stockData)
+        });
+        if (!response.ok) throw new Error('Failed to create');
+        alert("Stock added!");
+      }
+      await loadStocks();
+      elements.addStockForm.reset();
+      elements.addStockForm.querySelector('button[type="submit"]').textContent = "Add Stock";
+      delete elements.addStockForm.dataset.editingIndex;
+    } catch (error) {
+      console.error('Admin form error:', error);
+      alert('Error saving stock.');
+    }
+  });
 }
 
 
@@ -199,108 +205,203 @@ async function initAdminForm() {
 // MARKET PAGE FUNCTIONS (search/filter)
 // ==============================
 function applyFilters() {
-    const searchText = (elements.searchInput?.value || "").trim().toLowerCase();
-    const sector = elements.sectorFilter?.value || "all";
-    
-    const filtered = stocks.filter(stock => 
-        (sector === "all" || stock.sector === sector) &&
-        (stock.symbol.toLowerCase().includes(searchText) || 
-         stock.company.toLowerCase().includes(searchText))
-    );
-    
-    renderTable(filtered);
+  const searchText = (elements.searchInput?.value || "").trim().toLowerCase();
+  const sector = elements.sectorFilter?.value || "all";
+
+  const filtered = stocks.filter(stock =>
+    (sector === "all" || stock.sector === sector) &&
+    (stock.symbol.toLowerCase().includes(searchText) ||
+      stock.company.toLowerCase().includes(searchText))
+  );
+
+  renderTable(filtered);
 }
 
 function handleBuy(symbol) { alert(`Buy order for ${symbol}`); }
 function handleSell(symbol) { alert(`Sell order for ${symbol}`); }
 function showDetails(stock) {
-    // Details panel logic for market page
-    if (elements.detailsPlaceholder) elements.detailsPlaceholder.classList.add("hidden");
-    if (elements.detailsCard) elements.detailsCard.classList.remove("hidden");
+  // Details panel logic for market page
+  if (elements.detailsPlaceholder) elements.detailsPlaceholder.classList.add("hidden");
+  if (elements.detailsCard) elements.detailsCard.classList.remove("hidden");
 }
+
+// ==============================
+// CREATE ACCOUNT
+// ==============================
+
+// Create Account handler - only runs if register form exists
+document.addEventListener('DOMContentLoaded', () => {
+  const registerForm = document.getElementById('registerForm');
+  if (!registerForm) return; // Skip if not on create account page
+
+  registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const fullName = document.getElementById('fullName').value.trim();
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    // Basic validation
+    if (!fullName || !username || !email || !password) {
+      alert('Please fill in all fields.');
+      return;
+    }
+
+    if (password.length < 6) {
+      alert('Password must be at least 6 characters.');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName, username, email, password })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert(`✅ Account created successfully! You can now login at ${username}`);
+        window.location.href = 'login.html'; // Redirect to login
+      } else {
+        // Handle specific backend errors
+        const errorMsg = data.message || data.error || 'Registration failed';
+        alert(`❌ ${errorMsg}`);
+      }
+
+    } catch (err) {
+      console.error('Registration error:', err);
+      alert('❌ Network error. Please try again.');
+    }
+  });
+});
+
+
+// ==============================
+// LOGIN PAGE
+// ==============================
+
+// Login page handler - only runs if login form exists
+document.addEventListener('DOMContentLoaded', () => {
+  const loginForm = document.getElementById('loginForm');
+  if (!loginForm) return; // Skip if not on login page
+
+  // Login logic here (exact same code as before)
+  loginForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      if (!response.ok) {
+        alert('Login failed. Check your credentials.');
+        return;
+      }
+
+      const data = await response.json();
+      localStorage.setItem('authToken', data.token);
+
+      if (data.user?.role === 'admin') {
+        window.location.href = 'admin_home.html';
+      } else {
+        window.location.href = 'user_home.html';
+      }
+    } catch (err) {
+      alert('Login error. Please try again.');
+    }
+  });
+});
 
 // ==============================
 // CONTACT FORM
 // ==============================
 function initContactForm() {
-    if (!elements.contactForm || !elements.confirmationMessage) return;
-    
-    elements.contactForm.addEventListener("submit", (e) => {
-        e.preventDefault();
-        elements.contactForm.reset();
-        elements.confirmationMessage.style.display = "block";
-        setTimeout(() => elements.confirmationMessage.style.display = "none", 5000);
-    });
+  if (!elements.contactForm || !elements.confirmationMessage) return;
+
+  elements.contactForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+    elements.contactForm.reset();
+    elements.confirmationMessage.style.display = "block";
+    setTimeout(() => elements.confirmationMessage.style.display = "none", 5000);
+  });
 }
 
 // ==============================
 // SINGLE INITIALIZATION - Everything starts here
 // ==============================
-// ADD THIS NEW FUNCTION BEFORE THE DOMContentLoaded block
+
 async function loadStocks() {
-    try {
-        const response = await fetch('/api/stocks');
-        if (!response.ok) throw new Error('Failed to load stocks');
-        const rawStocks = await response.json();
-        stocks = rawStocks.map(stock => ({
-            symbol: stock.symbol || stock.ticker,
-            company: stock.company || stock.name,
-            sector: stock.sector,
-            price: stock.price || stock.currentPrice || 0,
-            change: stock.change || stock.priceChange || 0,
-            percentChange: stock.percentChange || stock.changePercent || 0
-        }));
-        renderTable(stocks);
-        renderAdminTable(stocks);
-        renderPopularStocks();
-    } catch (error) {
-        console.error('Error loading stocks:', error);
-        stocks = [];
-        renderTable([]);
-        renderAdminTable([]);
-    }
+  try {
+    const response = await fetch('/api/stocks');
+    if (!response.ok) throw new Error('Failed to load stocks');
+    const rawStocks = await response.json();
+    stocks = rawStocks.map(stock => ({
+      symbol: stock.symbol || stock.ticker,
+      company: stock.company || stock.name,
+      sector: stock.sector,
+      price: stock.price || stock.currentPrice || 0,
+      change: stock.change || stock.priceChange || 0,
+      percentChange: stock.percentChange || stock.changePercent || 0
+    }));
+    renderTable(stocks);
+    renderAdminTable(stocks);
+    renderPopularStocks();
+  } catch (error) {
+    console.error('Error loading stocks:', error);
+    stocks = [];
+    renderTable([]);
+    renderAdminTable([]);
+  }
 }
 
 // ==============================
 // Remove ALL elements definition and functions until line 176
 // REPLACE with this SINGLE block:
 document.addEventListener("DOMContentLoaded", async () => {
-    // Define elements AFTER DOM loads
-    window.elements = {
-        tableBody: document.getElementById("stockTable")?.querySelector("tbody"),
-        adminTableBody: document.getElementById("adminTableBody"),
-        searchInput: document.getElementById("searchInput"),
-        sectorFilter: document.getElementById("sectorFilter"),
-        adminSearch: document.getElementById("adminSearch"),
-        stockCount: document.getElementById("stockCount"),
-        clearAllBtn: document.getElementById("clearAllBtn"),
-        addStockForm: document.getElementById("addStockForm"),
-        symbolInput: document.getElementById("symbolInput"),
-        companyInput: document.getElementById("companyInput"),
-        sectorInput: document.getElementById("sectorInput"),
-        priceInput: document.getElementById("priceInput"),
-        changeInput: document.getElementById("changeInput"),
-        percentInput: document.getElementById("percentInput"),
-        detailsPlaceholder: document.getElementById("detailsPlaceholder"),
-        detailsCard: document.getElementById("stockDetails"),
-        stockList: document.getElementById("stock-list"),
-        contactForm: document.getElementById("contact-form"),
-        confirmationMessage: document.getElementById("confirmation-message")
-    };
+  // Define elements AFTER DOM loads
+  window.elements = {
+    tableBody: document.getElementById("stockTable")?.querySelector("tbody"),
+    adminTableBody: document.getElementById("adminTableBody"),
+    searchInput: document.getElementById("searchInput"),
+    sectorFilter: document.getElementById("sectorFilter"),
+    adminSearch: document.getElementById("adminSearch"),
+    stockCount: document.getElementById("stockCount"),
+    clearAllBtn: document.getElementById("clearAllBtn"),
+    addStockForm: document.getElementById("addStockForm"),
+    symbolInput: document.getElementById("symbolInput"),
+    companyInput: document.getElementById("companyInput"),
+    sectorInput: document.getElementById("sectorInput"),
+    priceInput: document.getElementById("priceInput"),
+    changeInput: document.getElementById("changeInput"),
+    percentInput: document.getElementById("percentInput"),
+    detailsPlaceholder: document.getElementById("detailsPlaceholder"),
+    detailsCard: document.getElementById("stockDetails"),
+    stockList: document.getElementById("stock-list"),
+    contactForm: document.getElementById("contact-form"),
+    confirmationMessage: document.getElementById("confirmation-message")
+  };
 
-    await loadStocks();
-    updateStockCount();
-    
-    // All your render functions here (they now work because elements exist)
-    renderPopularStocks();
-    if (elements.tableBody) renderTable(stocks);
-    if (elements.adminTableBody) renderAdminTable(stocks);
-    initAdminForm();
-    initContactForm();
-    
-    // Event listeners
-    if (elements.searchInput) elements.searchInput.addEventListener("input", applyFilters);
-    // ... rest unchanged
+  await loadStocks();
+  updateStockCount();
+
+  // All your render functions here (they now work because elements exist)
+  renderPopularStocks();
+  if (elements.tableBody) renderTable(stocks);
+  if (elements.adminTableBody) renderAdminTable(stocks);
+  initAdminForm();
+  initContactForm();
+
+  // Event listeners
+  if (elements.searchInput) elements.searchInput.addEventListener("input", applyFilters);
+  // ... rest unchanged
 });
 
 
@@ -313,7 +414,7 @@ let portfolioData = []; // Will be populated from backend
 
 // Color palette for pie slices
 const colorPalette = [
-  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
   '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
 ];
 
@@ -321,13 +422,13 @@ async function loadUserData() {
   try {
     // Fetch portfolio and cash from your backend API
     const response = await fetch('/api/user/dashboard');
-    
+
     if (!response.ok) {
       throw new Error('Failed to load dashboard data');
     }
-    
+
     const data = await response.json();
-    
+
     // Expected backend response format:
     // {
     //   cashBalance: 25000,
@@ -337,11 +438,11 @@ async function loadUserData() {
     //     { symbol: 'GOOGL', value: 2000 }
     //   ]
     // }
-    
+
     portfolioData = data.portfolio || [];
     updateCashBalance(data.cashBalance || 0);
     updatePortfolioDisplay();
-    
+
   } catch (error) {
     console.error('Error loading dashboard:', error);
     document.getElementById('portfolioTitle').textContent = 'Error loading portfolio';
@@ -356,13 +457,13 @@ function updateCashBalance(amount) {
 function updatePortfolioDisplay() {
   const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
   const titleEl = document.getElementById('portfolioTitle');
-  
+
   if (totalValue === 0) {
     titleEl.textContent = 'Portfolio Allocation (No holdings)';
     document.querySelector('.pie-legend').innerHTML = '<div>No stocks held</div>';
     return;
   }
-  
+
   titleEl.textContent = `Portfolio Allocation (Total Value: $${totalValue.toLocaleString()})`;
   updatePieLegend();
   drawPieChart();
@@ -370,7 +471,7 @@ function updatePortfolioDisplay() {
 
 function updatePieLegend() {
   const legendEl = document.getElementById('pieLegend');
-  legendEl.innerHTML = portfolioData.map((item, index) => 
+  legendEl.innerHTML = portfolioData.map((item, index) =>
     `<div><span class="legend-color" style="background: ${colorPalette[index % colorPalette.length]};"></span>${item.symbol} ($${item.value.toLocaleString()})</div>`
   ).join('');
 }
@@ -378,7 +479,7 @@ function updatePieLegend() {
 function drawPieChart() {
   const canvas = document.getElementById('portfolioPie');
   if (!canvas || portfolioData.length === 0) return;
-  
+
   const ctx = canvas.getContext('2d');
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
@@ -390,7 +491,7 @@ function drawPieChart() {
   portfolioData.forEach((item, index) => {
     const sliceAngle = (item.value / total) * 2 * Math.PI;
     const color = colorPalette[index % colorPalette.length];
-    
+
     ctx.fillStyle = color;
     ctx.strokeStyle = '#fff';
     ctx.lineWidth = 3;
@@ -422,31 +523,31 @@ let availableStocks = [];
 async function loadAvailableStocks() {
   try {
     const response = await fetch('/api/stocks');
-    
+
     if (!response.ok) throw new Error('Failed to load stocks');
-    
+
     availableStocks = await response.json();
     populateStocksTable();
-    
+
   } catch (error) {
     console.error('Error loading stocks:', error);
-    document.getElementById('stocksTableBody').innerHTML = 
+    document.getElementById('stocksTableBody').innerHTML =
       '<tr><td colspan="7" style="text-align: center; color: #dc2626;">Error loading stocks</td></tr>';
   }
 }
 
 function populateStocksTable(stocksToShow = availableStocks) {
   const tbody = document.getElementById('stocksTableBody');
-  
+
   if (stocksToShow.length === 0) {
     tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No stocks available</td></tr>';
     return;
   }
-  
+
   tbody.innerHTML = stocksToShow.map(stock => {
     const isPositive = stock.priceChange >= 0;
     const changePercent = ((stock.priceChange / (stock.price - stock.priceChange)) * 100).toFixed(2);
-    
+
     return `
       <tr>
         <td>${stock.name}</td>
@@ -468,10 +569,10 @@ function populateStocksTable(stocksToShow = availableStocks) {
 }
 
 // Sector filter (bonus feature using your existing controls)
-document.getElementById('stockFilter')?.addEventListener('change', function() {
+document.getElementById('stockFilter')?.addEventListener('change', function () {
   const filter = this.value;
-  const filteredStocks = filter === 'all' 
-    ? availableStocks 
+  const filteredStocks = filter === 'all'
+    ? availableStocks
     : availableStocks.filter(stock => stock.sector.toLowerCase().includes(filter));
   populateStocksTable(filteredStocks);
 });
@@ -484,15 +585,15 @@ let userPortfolio = [];
 async function loadUserPortfolio() {
   try {
     const response = await fetch('/api/user/portfolio');
-    
+
     if (!response.ok) throw new Error('Failed to load portfolio');
-    
+
     userPortfolio = await response.json();
     populatePortfolioTable();
-    
+
   } catch (error) {
     console.error('Error loading portfolio:', error);
-    document.getElementById('portfolioTableBody').innerHTML = 
+    document.getElementById('portfolioTableBody').innerHTML =
       '<tr><td colspan="6" style="text-align: center; color: #dc2626;">Error loading portfolio</td></tr>';
   }
 }
@@ -500,16 +601,16 @@ async function loadUserPortfolio() {
 function populatePortfolioTable() {
   const tbody = document.getElementById('portfolioTableBody');
   const totalValueEl = document.getElementById('totalPortfolioValue');
-  
+
   if (userPortfolio.length === 0) {
     tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No stocks owned</td></tr>';
     totalValueEl.textContent = '$0.00';
     return;
   }
-  
+
   const totalPortfolioValue = userPortfolio.reduce((sum, holding) => sum + holding.totalValue, 0);
   totalValueEl.textContent = `$${totalPortfolioValue.toLocaleString()}`;
-  
+
   tbody.innerHTML = userPortfolio.map(holding => {
     return `
       <tr>
@@ -534,10 +635,10 @@ async function loadUserPortfolioForSell() {
   try {
     const response = await fetch('/api/user/portfolio');
     if (!response.ok) throw new Error('Failed to load portfolio');
-    
+
     userPortfolio = await response.json();
     populateStockSelect();
-    
+
   } catch (error) {
     console.error('Error:', error);
     document.getElementById('stockSelect').innerHTML = '<option>Error loading portfolio</option>';
@@ -547,7 +648,7 @@ async function loadUserPortfolioForSell() {
 function populateStockSelect() {
   const select = document.getElementById('stockSelect');
   select.innerHTML = '<option value="">Choose a stock...</option>';
-  
+
   userPortfolio.forEach(stock => {
     select.innerHTML += `<option value="${stock.ticker}" data-shares="${stock.sharesOwned}" data-price="${stock.pricePerShare}">
       ${stock.name} (${stock.ticker}) - ${stock.sharesOwned} shares
@@ -555,18 +656,18 @@ function populateStockSelect() {
   });
 }
 
-document.getElementById('stockSelect').addEventListener('change', function() {
+document.getElementById('stockSelect').addEventListener('change', function () {
   const selectedOption = this.options[this.selectedIndex];
   const sharesOwned = parseInt(selectedOption.dataset.shares);
   const pricePerShare = parseFloat(selectedOption.dataset.price);
-  
+
   const stockInfo = document.getElementById('stockInfo');
   if (this.value) {
     stockInfo.textContent = `${selectedOption.textContent} | Current Price: $${pricePerShare.toLocaleString()}`;
   } else {
     stockInfo.textContent = '';
   }
-  
+
   // Update shares input max
   const sharesInput = document.getElementById('sharesToSell');
   sharesInput.max = sharesOwned;
@@ -574,19 +675,19 @@ document.getElementById('stockSelect').addEventListener('change', function() {
   document.getElementById('sharesError').style.display = 'none';
 });
 
-document.getElementById('sellForm').addEventListener('submit', function(e) {
+document.getElementById('sellForm').addEventListener('submit', function (e) {
   e.preventDefault();
-  
+
   const ticker = document.getElementById('stockSelect').value;
   const sharesInput = document.getElementById('sharesToSell');
   const sharesToSell = parseInt(sharesInput.value);
-  
+
   if (!validateSellInput(ticker, sharesToSell)) return;
-  
+
   const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
   const pricePerShare = parseFloat(selectedOption.dataset.price);
   const totalSellValue = sharesToSell * pricePerShare;
-  
+
   showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue);
 });
 
@@ -594,25 +695,25 @@ function validateSellInput(ticker, sharesToSell) {
   const sharesError = document.getElementById('sharesError');
   const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
   const sharesOwned = parseInt(selectedOption.dataset.shares);
-  
+
   if (!ticker) {
     sharesError.textContent = 'Please select a stock';
     sharesError.style.display = 'block';
     return false;
   }
-  
+
   if (!sharesToSell || sharesToSell <= 0) {
     sharesError.textContent = 'Enter a valid number of shares (1 or more)';
     sharesError.style.display = 'block';
     return false;
   }
-  
+
   if (sharesToSell > sharesOwned) {
     sharesError.textContent = `You only own ${sharesOwned} shares`;
     sharesError.style.display = 'block';
     return false;
   }
-  
+
   sharesError.style.display = 'none';
   return true;
 }
@@ -620,7 +721,7 @@ function validateSellInput(ticker, sharesToSell) {
 function showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue) {
   const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
   const stockName = selectedOption.textContent.split(' (')[0];
-  
+
   document.getElementById('confirmDetails').innerHTML = `
     <div><span class="label">Stock:</span><span class="value">${stockName}</span></div>
     <div><span class="label">Ticker:</span><span class="value">${ticker}</span></div>
@@ -631,25 +732,25 @@ function showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue) {
       <span class="value positive">$${totalSellValue.toLocaleString()}</span>
     </div>
   `;
-  
+
   document.getElementById('confirmModal').style.display = 'flex';
 }
 
-document.getElementById('cancelSellBtn').addEventListener('click', function() {
+document.getElementById('cancelSellBtn').addEventListener('click', function () {
   document.getElementById('confirmModal').style.display = 'none';
 });
 
-document.getElementById('confirmSellBtn').addEventListener('click', async function() {
+document.getElementById('confirmSellBtn').addEventListener('click', async function () {
   const ticker = document.getElementById('stockSelect').value;
   const sharesToSell = parseInt(document.getElementById('sharesToSell').value);
-  
+
   try {
     const response = await fetch('/api/trades/sell', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticker, shares: sharesToSell })
     });
-    
+
     if (response.ok) {
       alert('Sell order confirmed! Portfolio updated.');
       window.refreshUserDashboard?.(); // Refresh dashboard if available
@@ -962,10 +1063,10 @@ function renderMarketCalendar() {
   const month = today.getMonth(); // 0-11
 
   const monthNames = [
-    'January','February','March','April','May','June',
-    'July','August','September','October','November','December'
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
   ];
-  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
   monthLabelEl.textContent = `${monthNames[month]} ${year}`;
 
@@ -1023,8 +1124,8 @@ function renderMarketCalendar() {
 // Initialization
 // ------------------------------
 document.addEventListener('DOMContentLoaded', () => {
-  
-  
+
+
   // Only run on admin home
   if (!document.getElementById('adminHomeStockTableBody')) return;
 
