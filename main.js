@@ -1,63 +1,30 @@
 // ==============================
 // CENTRAL STOCKS ARRAY - This is what both Market and Admin use
 // ==============================
-let stocks = []; // Start empty - admin will populate it
-
-// ==============================
-// POPULAR STOCKS - For other pages (home page stock list)
-// ==============================
-const popularStocks = [
-  { symbol: "AAPL", name: "Apple Inc.", price: 193.12 },
-  { symbol: "MSFT", name: "Microsoft Corp.", price: 415.27 },
-  { symbol: "GOOGL", name: "Alphabet Inc.", price: 152.04 }
-];
-
-// DOM elements (grab once, reuse everywhere)
-const elements = {
-    tableBody: document.getElementById("stockTable")?.querySelector("tbody"),
-    adminTableBody: document.getElementById("adminTableBody"),
-    searchInput: document.getElementById("searchInput"),
-    sectorFilter: document.getElementById("sectorFilter"),
-    adminSearch: document.getElementById("adminSearch"),
-    stockCount: document.getElementById("stockCount"),
-    clearAllBtn: document.getElementById("clearAllBtn"),
-    addStockForm: document.getElementById("addStockForm"),
-    symbolInput: document.getElementById("symbolInput"),
-    companyInput: document.getElementById("companyInput"),
-    sectorInput: document.getElementById("sectorInput"),
-    priceInput: document.getElementById("priceInput"),
-    changeInput: document.getElementById("changeInput"),
-    percentInput: document.getElementById("percentInput"),
-    detailsPlaceholder: document.getElementById("detailsPlaceholder"),
-    detailsCard: document.getElementById("stockDetails"),
-    stockList: document.getElementById("stock-list"),
-    contactForm: document.getElementById("contact-form"),
-    confirmationMessage: document.getElementById("confirmation-message")
-};
+let stocks = [];
+let authToken = localStorage.getItem('authToken') || null;
 
 // ==============================
 // RENDER POPULAR STOCKS (for home page)
 // ==============================
 function renderPopularStocks() {
     if (!elements.stockList) return;
-    
     elements.stockList.innerHTML = "";
-    
-    popularStocks.forEach(stock => {
+    const topStocks = stocks.slice(0, 3);
+    topStocks.forEach(stock => {
         const li = document.createElement("li");
         const leftSpan = document.createElement("span");
         leftSpan.className = "stock-symbol";
-        leftSpan.textContent = `${stock.symbol} – ${stock.name}`;
-        
+        leftSpan.textContent = `${stock.symbol || stock.ticker} – ${stock.company || stock.name}`;
         const rightSpan = document.createElement("span");
         rightSpan.className = "stock-price";
-        rightSpan.textContent = `$${stock.price.toFixed(2)}`;
-        
+        rightSpan.textContent = `$${(stock.price || 0).toFixed(2)}`;
         li.appendChild(leftSpan);
         li.appendChild(rightSpan);
         elements.stockList.appendChild(li);
     });
 }
+
 
 // ==============================
 // RENDER MARKET TABLE (for market.html)
@@ -143,14 +110,24 @@ function updateStockCount() {
     }
 }
 
-function deleteStock(index) {
+async function deleteStock(index) {
     if (confirm(`Delete ${stocks[index].symbol}?`)) {
-        stocks.splice(index, 1);
-        renderAdminTable(stocks);
-        updateStockCount();
-        alert("Stock deleted!");
+        try {
+            const response = await fetch(`/api/admin/stocks/${stocks[index].symbol}`, {
+                method: 'DELETE',
+                headers: { 'Content-Type': 'application/json', 
+                          ...(authToken && { 'Authorization': `Bearer ${authToken}` }) }
+            });
+            if (!response.ok) throw new Error('Failed to delete');
+            await loadStocks();
+            alert("Stock deleted!");
+        } catch (error) {
+            console.error('Delete error:', error);
+            alert('Error deleting stock.');
+        }
     }
 }
+
 
 function editStock(index) {
     const stock = stocks[index];
@@ -167,22 +144,17 @@ function editStock(index) {
     }
 }
 
-function initAdminForm() {
+async function initAdminForm() {
     if (!elements.addStockForm) return;
-    
-    elements.addStockForm.addEventListener("submit", (event) => {
+    elements.addStockForm.addEventListener("submit", async (event) => {
         event.preventDefault();
-        
         const editingIndex = elements.addStockForm.dataset.editingIndex;
-        
-        // Validate all fields exist
         if (!elements.symbolInput?.value || !elements.companyInput?.value || 
             !elements.sectorInput?.value || !elements.priceInput?.value || 
             !elements.changeInput?.value || !elements.percentInput?.value) {
             alert("Please fill in all fields.");
             return;
         }
-        
         const stockData = {
             symbol: elements.symbolInput.value.toUpperCase(),
             company: elements.companyInput.value,
@@ -191,22 +163,37 @@ function initAdminForm() {
             change: parseFloat(elements.changeInput.value),
             percentChange: parseFloat(elements.percentInput.value)
         };
-        
-        if (editingIndex) {
-            stocks[editingIndex] = stockData;
-            delete elements.addStockForm.dataset.editingIndex;
+        try {
+            if (editingIndex !== undefined) {
+                const response = await fetch(`/api/admin/stocks/${stockData.symbol}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json', 
+                              ...(authToken && { 'Authorization': `Bearer ${authToken}` }) },
+                    body: JSON.stringify(stockData)
+                });
+                if (!response.ok) throw new Error('Failed to update');
+                alert("Stock updated!");
+            } else {
+                const response = await fetch('/api/admin/stocks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 
+                              ...(authToken && { 'Authorization': `Bearer ${authToken}` }) },
+                    body: JSON.stringify(stockData)
+                });
+                if (!response.ok) throw new Error('Failed to create');
+                alert("Stock added!");
+            }
+            await loadStocks();
+            elements.addStockForm.reset();
             elements.addStockForm.querySelector('button[type="submit"]').textContent = "Add Stock";
-            alert("Stock updated!");
-        } else {
-            stocks.push(stockData);
-            alert("Stock added!");
+            delete elements.addStockForm.dataset.editingIndex;
+        } catch (error) {
+            console.error('Admin form error:', error);
+            alert('Error saving stock.');
         }
-        
-        renderAdminTable(stocks);
-        updateStockCount();
-        elements.addStockForm.reset();
     });
 }
+
 
 // ==============================
 // MARKET PAGE FUNCTIONS (search/filter)
@@ -249,38 +236,73 @@ function initContactForm() {
 // ==============================
 // SINGLE INITIALIZATION - Everything starts here
 // ==============================
-document.addEventListener("DOMContentLoaded", () => {
-    renderPopularStocks();  // Home page stocks
-    renderTable();          // Market page table  
-    renderAdminTable();     // Admin page table
-    updateStockCount();     // Admin counter
+// ADD THIS NEW FUNCTION BEFORE THE DOMContentLoaded block
+async function loadStocks() {
+    try {
+        const response = await fetch('/api/stocks');
+        if (!response.ok) throw new Error('Failed to load stocks');
+        const rawStocks = await response.json();
+        stocks = rawStocks.map(stock => ({
+            symbol: stock.symbol || stock.ticker,
+            company: stock.company || stock.name,
+            sector: stock.sector,
+            price: stock.price || stock.currentPrice || 0,
+            change: stock.change || stock.priceChange || 0,
+            percentChange: stock.percentChange || stock.changePercent || 0
+        }));
+        renderTable(stocks);
+        renderAdminTable(stocks);
+        renderPopularStocks();
+    } catch (error) {
+        console.error('Error loading stocks:', error);
+        stocks = [];
+        renderTable([]);
+        renderAdminTable([]);
+    }
+}
+
+// ==============================
+// Remove ALL elements definition and functions until line 176
+// REPLACE with this SINGLE block:
+document.addEventListener("DOMContentLoaded", async () => {
+    // Define elements AFTER DOM loads
+    window.elements = {
+        tableBody: document.getElementById("stockTable")?.querySelector("tbody"),
+        adminTableBody: document.getElementById("adminTableBody"),
+        searchInput: document.getElementById("searchInput"),
+        sectorFilter: document.getElementById("sectorFilter"),
+        adminSearch: document.getElementById("adminSearch"),
+        stockCount: document.getElementById("stockCount"),
+        clearAllBtn: document.getElementById("clearAllBtn"),
+        addStockForm: document.getElementById("addStockForm"),
+        symbolInput: document.getElementById("symbolInput"),
+        companyInput: document.getElementById("companyInput"),
+        sectorInput: document.getElementById("sectorInput"),
+        priceInput: document.getElementById("priceInput"),
+        changeInput: document.getElementById("changeInput"),
+        percentInput: document.getElementById("percentInput"),
+        detailsPlaceholder: document.getElementById("detailsPlaceholder"),
+        detailsCard: document.getElementById("stockDetails"),
+        stockList: document.getElementById("stock-list"),
+        contactForm: document.getElementById("contact-form"),
+        confirmationMessage: document.getElementById("confirmation-message")
+    };
+
+    await loadStocks();
+    updateStockCount();
     
-    initAdminForm();        // Admin form
-    initContactForm();      // Contact form
+    // All your render functions here (they now work because elements exist)
+    renderPopularStocks();
+    if (elements.tableBody) renderTable(stocks);
+    if (elements.adminTableBody) renderAdminTable(stocks);
+    initAdminForm();
+    initContactForm();
     
     // Event listeners
     if (elements.searchInput) elements.searchInput.addEventListener("input", applyFilters);
-    if (elements.sectorFilter) elements.sectorFilter.addEventListener("change", applyFilters);
-    if (elements.adminSearch) {
-        elements.adminSearch.addEventListener("input", () => {
-            const text = elements.adminSearch.value.trim().toLowerCase();
-            const filtered = stocks.filter(s => 
-                s.symbol.toLowerCase().includes(text) || s.company.toLowerCase().includes(text)
-            );
-            renderAdminTable(filtered);
-        });
-    }
-    if (elements.clearAllBtn) {
-        elements.clearAllBtn.addEventListener("click", () => {
-            if (confirm("Delete ALL stocks?")) {
-                stocks = [];
-                renderAdminTable([]);
-                renderTable([]);
-                updateStockCount();
-            }
-        });
-    }
+    // ... rest unchanged
 });
+
 
 // ==============================
 // User Home Page JavaScript
@@ -389,13 +411,6 @@ function refreshDashboard() {
   loadUserData();
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-  loadUserData();
-  // Auto-refresh every 30 seconds
-  setInterval(refreshDashboard, 30000);
-});
-
 // Global function for other pages to trigger refresh (e.g. after buy/sell)
 window.refreshUserDashboard = refreshDashboard;
 
@@ -406,7 +421,7 @@ let availableStocks = [];
 
 async function loadAvailableStocks() {
   try {
-    const response = await fetch('/api/stocks/available');
+    const response = await fetch('/api/stocks');
     
     if (!response.ok) throw new Error('Failed to load stocks');
     
@@ -461,11 +476,6 @@ document.getElementById('stockFilter')?.addEventListener('change', function() {
   populateStocksTable(filteredStocks);
 });
 
-// Initialize stocks page
-if (document.getElementById('stockTable')) {
-  document.addEventListener('DOMContentLoaded', loadAvailableStocks);
-}
-
 // ==============================
 // User Portfolio Page Function
 // ==============================
@@ -514,11 +524,6 @@ function populatePortfolioTable() {
       </tr>
     `;
   }).join('');
-}
-
-// Initialize portfolio page
-if (document.getElementById('portfolioTableBody')) {
-  document.addEventListener('DOMContentLoaded', loadUserPortfolio);
 }
 
 // ==============================
@@ -639,7 +644,7 @@ document.getElementById('confirmSellBtn').addEventListener('click', async functi
   const sharesToSell = parseInt(document.getElementById('sharesToSell').value);
   
   try {
-    const response = await fetch('/api/user/sell', {
+    const response = await fetch('/api/trades/sell', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ ticker, shares: sharesToSell })
@@ -659,11 +664,6 @@ document.getElementById('confirmSellBtn').addEventListener('click', async functi
   }
 });
 
-// Initialize
-if (document.getElementById('sellForm')) {
-  document.addEventListener('DOMContentLoaded', loadUserPortfolioForSell);
-}
-
 // ==============================
 // Sell Stocks Page Function
 // ==============================
@@ -674,7 +674,7 @@ let filteredTransactions = [];
 // Load from backend API
 async function loadUserTransactions() {
   try {
-    const response = await fetch('/api/user/transactions');
+    const response = await fetch('/api/trades/transactions');
     if (!response.ok) throw new Error('Failed to load transactions');
 
     userTransactions = await response.json();
@@ -809,7 +809,7 @@ let marketHoursData = null;
 async function loadAdminHomeStocks() {
   try {
     // Adjust this endpoint to your backend
-    const response = await fetch('/api/stocks/available');
+    const response = await fetch('/api/stocks');
     if (!response.ok) throw new Error('Failed to load stocks');
 
     const allStocks = await response.json();
@@ -866,7 +866,7 @@ async function loadAdminHomeStocks() {
 async function loadMarketHours() {
   try {
     // Adjust this endpoint to your backend
-    const response = await fetch('/api/admin/market-hours');
+    const response = await fetch('/api/admin/market/hours');
     if (!response.ok) throw new Error('Failed to load market hours');
 
     marketHoursData = await response.json();
@@ -1023,6 +1023,8 @@ function renderMarketCalendar() {
 // Initialization
 // ------------------------------
 document.addEventListener('DOMContentLoaded', () => {
+  
+  
   // Only run on admin home
   if (!document.getElementById('adminHomeStockTableBody')) return;
 
