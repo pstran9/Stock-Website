@@ -1,4 +1,35 @@
 // ==============================
+// API CONFIG (S3 frontend -> EC2 backend)
+// ==============================
+
+//EC2 Elastic IP
+const API_ORIGIN = "http://35.153.95.86";
+
+function apiUrl(path) {
+
+  return `${API_ORIGIN}${path}`;
+
+}
+
+async function apiFetch(path, options = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...(options.header || {}),
+  };
+
+
+//Auth request run automatically
+const token = localStorage.getItem("authToken");
+if (token && !headers.Authorization) {
+  headers.Authorization = `Bearer ${token}`;
+}
+
+const res = await fetch(apiUrl(path), {...options, headers});
+return res;
+
+}
+
+// ==============================
 // CENTRAL STOCKS ARRAY - This is what both Market and Admin use
 // ==============================
 let stocks = [];
@@ -254,9 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await apiFetch('/api/auth/register', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fullName, username, email, password })
       });
 
@@ -295,9 +325,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const password = document.getElementById('password').value;
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await apiFetchetch('/api/auth/login', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
 
@@ -341,7 +370,7 @@ function initContactForm() {
 
 async function loadStocks() {
   try {
-    const response = await fetch('/api/stocks');
+    const response = await apiFetch('/api/stocks');
     if (!response.ok) throw new Error('Failed to load stocks');
     const rawStocks = await response.json();
     stocks = rawStocks.map(stock => ({
