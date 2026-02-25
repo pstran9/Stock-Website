@@ -226,50 +226,6 @@ function showDetails(stock) {
 }
 
 // ==============================
-<<<<<<< HEAD
-// LOGIN PAGE
-// ==============================
-
-// Login page handler - only runs if login form exists
-document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('loginForm');
-  if (!loginForm) return; // Skip if not on login page
-  
-  // Login logic here (exact same code as before)
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-    
-    try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-      
-      if (!response.ok) {
-        alert('Login failed. Check your credentials.');
-        return;
-      }
-      
-      const data = await response.json();
-      localStorage.setItem('authToken', data.token);
-      
-      if (data.user?.role === 'admin') {
-        window.location.href = 'admin_home.html';
-      } else {
-        window.location.href = 'user_home.html';
-      }
-    } catch (err) {
-      alert('Login error. Please try again.');
-    }
-  });
-});
-
-
-// ==============================
-=======
 // CREATE ACCOUNT
 // ==============================
 
@@ -365,7 +321,6 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ==============================
->>>>>>> 9954ab82e05dd5d6a1e8934dbfebf0fab9640857
 // CONTACT FORM
 // ==============================
 
