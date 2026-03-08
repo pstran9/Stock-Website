@@ -1,65 +1,199 @@
-// ==============================
-// API CONFIG (S3 frontend -> EC2 backend)
-// ==============================
+// =====================================================
+// Stock Website Frontend Integration
+// Wired to Ariana's backend (Node/Express + MySQL)
+// Backend branch: BACKEND / stock-trading-backend-crom
+// =====================================================
 
-//EC2 Elastic IP
 const API_ORIGIN = "http://35.153.95.86";
 
-function apiUrl(path) {
+function apiUrl(path = "") {
+  const normalized = path.startsWith("/") ? path : `/${path}`;
+  return `${API_ORIGIN}${normalized}`;
+}
 
-  return `${API_ORIGIN}${path}`;
+function getAuthToken() {
+  return localStorage.getItem("authToken") || null;
+}
 
+function setAuthToken(token) {
+  if (token) {
+    localStorage.setItem("authToken", token);
+  }
+}
+
+function clearAuthToken() {
+  localStorage.removeItem("authToken");
 }
 
 async function apiFetch(path, options = {}) {
   const headers = {
-    "Content-Type": "application/json",
-    ...(options.header || {}),
+    ...(options.body ? { "Content-Type": "application/json" } : {}),
+    ...(options.headers || {})
   };
 
-
-  //Auth request run automatically
-  const token = localStorage.getItem("authToken");
+  const token = getAuthToken();
   if (token && !headers.Authorization) {
     headers.Authorization = `Bearer ${token}`;
   }
 
-  const res = await fetch(apiUrl(path), { ...options, headers });
-  return res;
+  const response = await fetch(apiUrl(path), {
+    ...options,
+    headers
+  });
 
+  return response;
 }
 
-// ==============================
-// CENTRAL STOCKS ARRAY - This is what both Market and Admin use
-// ==============================
-let stocks = [];
-let authToken = localStorage.getItem('authToken') || null;
+async function parseJsonSafely(response) {
+  try {
+    return await response.json();
+  } catch {
+    return null;
+  }
+}
 
-// ==============================
-// RENDER POPULAR STOCKS (for home page)
-// ==============================
+function requireElement(id) {
+  return document.getElementById(id);
+}
+
+function normalizeStock(stock) {
+  const price = Number(stock.price ?? stock.currentPrice ?? 0);
+  const change = Number(stock.change ?? stock.priceChange ?? 0);
+  const percentChange = Number(
+    stock.percentChange ??
+    stock.changePercent ??
+    (price - change !== 0 ? (change / (price - change)) * 100 : 0)
+  );
+
+  return {
+    symbol: stock.symbol || stock.ticker || "",
+    ticker: stock.ticker || stock.symbol || "",
+    company: stock.company || stock.name || "",
+    name: stock.name || stock.company || "",
+    sector: stock.sector || "",
+    price,
+    change,
+    percentChange
+  };
+}
+
+function normalizePortfolioEntry(item) {
+  const sharesOwned = Number(item.sharesOwned ?? item.shares ?? item.quantity ?? 0);
+  const pricePerShare = Number(item.pricePerShare ?? item.currentPrice ?? item.price ?? 0);
+  const totalValue = Number(item.totalValue ?? item.value ?? sharesOwned * pricePerShare ?? 0);
+
+  return {
+    ticker: item.ticker || item.symbol || "",
+    symbol: item.symbol || item.ticker || "",
+    name: item.name || item.company || item.stockName || item.ticker || item.symbol || "",
+    company: item.company || item.name || item.stockName || "",
+    sharesOwned,
+    pricePerShare,
+    totalValue,
+    value: totalValue
+  };
+}
+
+function normalizeTransaction(tx) {
+  return {
+    date: tx.date || tx.createdAt?.slice?.(0, 10) || "",
+    time: tx.time || tx.createdAt?.slice?.(11, 19) || "",
+    stockName: tx.stockName || tx.name || tx.company || tx.ticker || tx.symbol || "",
+    ticker: tx.ticker || tx.symbol || "",
+    totalShares: Number(tx.totalShares ?? tx.shares ?? tx.quantity ?? 0),
+    totalPrice: Number(tx.totalPrice ?? tx.amount ?? tx.value ?? 0),
+    action: tx.action || tx.type || ""
+  };
+}
+
+function getDashboardElements() {
+  return {
+    stockList: requireElement("stock-list"),
+    tableBody: requireElement("stockTable")?.querySelector("tbody"),
+    adminTableBody: requireElement("adminTableBody"),
+    searchInput: requireElement("searchInput"),
+    sectorFilter: requireElement("sectorFilter"),
+    stockCount: requireElement("stockCount"),
+    addStockForm: requireElement("addStockForm"),
+    symbolInput: requireElement("symbolInput"),
+    companyInput: requireElement("companyInput"),
+    sectorInput: requireElement("sectorInput"),
+    priceInput: requireElement("priceInput"),
+    changeInput: requireElement("changeInput"),
+    percentInput: requireElement("percentInput"),
+    detailsPlaceholder: requireElement("detailsPlaceholder"),
+    detailsCard: requireElement("stockDetails"),
+    contactForm: requireElement("contact-form"),
+    confirmationMessage: requireElement("confirmation-message")
+  };
+}
+
+let elements = {};
+let stocks = [];
+let portfolioData = [];
+let availableStocks = [];
+let userPortfolio = [];
+let userTransactions = [];
+let filteredTransactions = [];
+let marketHoursData = null;
+
+const colorPalette = [
+  "#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0",
+  "#9966FF", "#FF9F40", "#C9CBCF", "#8DD17E"
+];
+
+function updateStockCount() {
+  if (elements.stockCount) {
+    elements.stockCount.textContent = String(stocks.length);
+  }
+}
+
 function renderPopularStocks() {
   if (!elements.stockList) return;
+
   elements.stockList.innerHTML = "";
-  const topStocks = stocks.slice(0, 3);
-  topStocks.forEach(stock => {
+  stocks.slice(0, 3).forEach((stock) => {
     const li = document.createElement("li");
+
     const leftSpan = document.createElement("span");
     leftSpan.className = "stock-symbol";
-    leftSpan.textContent = `${stock.symbol || stock.ticker} – ${stock.company || stock.name}`;
+    leftSpan.textContent = `${stock.symbol} – ${stock.company}`;
+
     const rightSpan = document.createElement("span");
     rightSpan.className = "stock-price";
-    rightSpan.textContent = `$${(stock.price || 0).toFixed(2)}`;
+    rightSpan.textContent = `$${stock.price.toFixed(2)}`;
+
     li.appendChild(leftSpan);
     li.appendChild(rightSpan);
     elements.stockList.appendChild(li);
   });
 }
 
+function showDetails(stock) {
+  if (elements.detailsPlaceholder) {
+    elements.detailsPlaceholder.classList.add("hidden");
+  }
+  if (elements.detailsCard) {
+    elements.detailsCard.classList.remove("hidden");
+  }
 
-// ==============================
-// RENDER MARKET TABLE (for market.html)
-// ==============================
+  const detailIds = {
+    symbol: requireElement("detailSymbol"),
+    company: requireElement("detailCompany"),
+    sector: requireElement("detailSector"),
+    price: requireElement("detailPrice"),
+    change: requireElement("detailChange"),
+    percent: requireElement("detailPercentChange")
+  };
+
+  if (detailIds.symbol) detailIds.symbol.textContent = stock.symbol;
+  if (detailIds.company) detailIds.company.textContent = stock.company;
+  if (detailIds.sector) detailIds.sector.textContent = stock.sector || "N/A";
+  if (detailIds.price) detailIds.price.textContent = `$${stock.price.toFixed(2)}`;
+  if (detailIds.change) detailIds.change.textContent = stock.change.toFixed(2);
+  if (detailIds.percent) detailIds.percent.textContent = `${stock.percentChange.toFixed(2)}%`;
+}
+
 function renderTable(data = stocks) {
   if (!elements.tableBody) return;
 
@@ -69,42 +203,36 @@ function renderTable(data = stocks) {
     const row = document.createElement("tr");
     row.addEventListener("click", () => showDetails(stock));
 
-    // Create all cells 
     const cells = [
       stock.symbol,
       stock.company,
       stock.sector,
       stock.price.toFixed(2),
       stock.change.toFixed(2),
-      (stock.percentChange.toFixed(2) + "%")
+      `${stock.percentChange.toFixed(2)}%`
     ];
 
-    cells.forEach((content, i) => {
+    cells.forEach((content, index) => {
       const td = document.createElement("td");
-      if (i >= 4) { // change/percent columns
-        const value = i === 4 ? stock.change : stock.percentChange;
-        td.className = value > 0 ? 'positive' : value < 0 ? 'negative' : 'neutral';
+      if (index >= 4) {
+        const value = index === 4 ? stock.change : stock.percentChange;
+        td.className = value > 0 ? "positive" : value < 0 ? "negative" : "neutral";
       }
       td.textContent = content;
       row.appendChild(td);
     });
 
-    // Actions
     const actionsTd = document.createElement("td");
     actionsTd.className = "actions-cell";
     actionsTd.innerHTML = `
-            <button class="btn btn-buy" onclick="event.stopPropagation(); handleBuy('${stock.symbol}')">Buy</button>
-            <button class="btn btn-sell" onclick="event.stopPropagation(); handleSell('${stock.symbol}')">Sell</button>
-        `;
+      <button class="btn btn-buy" onclick="event.stopPropagation(); handleBuy('${stock.symbol}')">Buy</button>
+      <button class="btn btn-sell" onclick="event.stopPropagation(); handleSell('${stock.symbol}')">Sell</button>
+    `;
     row.appendChild(actionsTd);
-
     elements.tableBody.appendChild(row);
   });
 }
 
-// ==============================
-// RENDER ADMIN TABLE
-// ==============================
 function renderAdminTable(data = stocks) {
   if (!elements.adminTableBody) return;
 
@@ -113,57 +241,70 @@ function renderAdminTable(data = stocks) {
   data.forEach((stock, index) => {
     const row = document.createElement("tr");
     row.innerHTML = `
-            <td><strong>${stock.symbol}</strong></td>
-            <td>${stock.company}</td>
-            <td>${stock.sector}</td>
-            <td>$${stock.price.toFixed(2)}</td>
-            <td class="${stock.change > 0 ? 'positive' : stock.change < 0 ? 'negative' : 'neutral'}">
-                ${stock.change.toFixed(2)}
-            </td>
-            <td class="${stock.percentChange > 0 ? 'positive' : stock.percentChange < 0 ? 'negative' : 'neutral'}">
-                ${stock.percentChange.toFixed(2)}%
-            </td>
-            <td>
-                <button class="btn-edit" onclick="editStock(${index})">Edit</button>
-                <button class="btn-delete" onclick="deleteStock(${index})">Delete</button>
-            </td>
-        `;
+      <td><strong>${stock.symbol}</strong></td>
+      <td>${stock.company}</td>
+      <td>${stock.sector}</td>
+      <td>$${stock.price.toFixed(2)}</td>
+      <td class="${stock.change > 0 ? "positive" : stock.change < 0 ? "negative" : "neutral"}">
+        ${stock.change.toFixed(2)}
+      </td>
+      <td class="${stock.percentChange > 0 ? "positive" : stock.percentChange < 0 ? "negative" : "neutral"}">
+        ${stock.percentChange.toFixed(2)}%
+      </td>
+      <td>
+        <button class="btn-edit" onclick="editStock(${index})">Edit</button>
+        <button class="btn-delete" onclick="deleteStock(${index})">Delete</button>
+      </td>
+    `;
     elements.adminTableBody.appendChild(row);
   });
 }
 
-// ==============================
-// ADMIN FUNCTIONS
-// ==============================
-function updateStockCount() {
-  if (elements.stockCount) {
-    elements.stockCount.textContent = stocks.length;
-  }
+function applyFilters() {
+  const searchText = (elements.searchInput?.value || "").trim().toLowerCase();
+  const sector = elements.sectorFilter?.value || "all";
+
+  const filtered = stocks.filter((stock) => {
+    const matchesSector = sector === "all" || stock.sector === sector;
+    const matchesText = stock.symbol.toLowerCase().includes(searchText) || stock.company.toLowerCase().includes(searchText);
+    return matchesSector && matchesText;
+  });
+
+  renderTable(filtered);
 }
 
-async function deleteStock(index) {
-  if (confirm(`Delete ${stocks[index].symbol}?`)) {
-    try {
-      const response = await fetch(`/api/admin/stocks/${stocks[index].symbol}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(authToken && { 'Authorization': `Bearer ${authToken}` })
-        }
-      });
-      if (!response.ok) throw new Error('Failed to delete');
-      await loadStocks();
-      alert("Stock deleted!");
-    } catch (error) {
-      console.error('Delete error:', error);
-      alert('Error deleting stock.');
-    }
-  }
+function handleBuy(symbol) {
+  window.location.href = `user_buy_stocks.html?ticker=${encodeURIComponent(symbol)}`;
 }
 
+function handleSell(symbol) {
+  window.location.href = `user_sell_stocks.html?ticker=${encodeURIComponent(symbol)}`;
+}
+
+async function loadStocks() {
+  try {
+    const response = await apiFetch("/api/stocks");
+    if (!response.ok) throw new Error("Failed to load stocks");
+
+    const rawStocks = await response.json();
+    stocks = rawStocks.map(normalizeStock);
+
+    renderTable(stocks);
+    renderAdminTable(stocks);
+    renderPopularStocks();
+    updateStockCount();
+  } catch (error) {
+    console.error("Error loading stocks:", error);
+    stocks = [];
+    renderTable([]);
+    renderAdminTable([]);
+  }
+}
 
 function editStock(index) {
   const stock = stocks[index];
+  if (!stock) return;
+
   if (elements.symbolInput) elements.symbolInput.value = stock.symbol;
   if (elements.companyInput) elements.companyInput.value = stock.company;
   if (elements.sectorInput) elements.sectorInput.value = stock.sector;
@@ -172,347 +313,136 @@ function editStock(index) {
   if (elements.percentInput) elements.percentInput.value = stock.percentChange;
 
   if (elements.addStockForm) {
-    elements.addStockForm.querySelector('button[type="submit"]').textContent = "Update Stock";
-    elements.addStockForm.dataset.editingIndex = index;
+    const submitBtn = elements.addStockForm.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = "Update Stock";
+    elements.addStockForm.dataset.editingTicker = stock.symbol;
   }
 }
 
-async function initAdminForm() {
+async function deleteStock(index) {
+  const stock = stocks[index];
+  if (!stock) return;
+  if (!confirm(`Delete ${stock.symbol}?`)) return;
+
+  try {
+    const response = await apiFetch(`/api/admin/stocks/${encodeURIComponent(stock.symbol)}`, {
+      method: "DELETE"
+    });
+
+    if (!response.ok) throw new Error("Failed to delete stock");
+
+    alert("Stock deleted.");
+    await loadStocks();
+  } catch (error) {
+    console.error("Delete error:", error);
+    alert("Error deleting stock.");
+  }
+}
+
+function initAdminForm() {
   if (!elements.addStockForm) return;
+
   elements.addStockForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const editingIndex = elements.addStockForm.dataset.editingIndex;
-    if (!elements.symbolInput?.value || !elements.companyInput?.value ||
-      !elements.sectorInput?.value || !elements.priceInput?.value ||
-      !elements.changeInput?.value || !elements.percentInput?.value) {
-      alert("Please fill in all fields.");
-      return;
-    }
-    const stockData = {
-      symbol: elements.symbolInput.value.toUpperCase(),
-      company: elements.companyInput.value,
-      sector: elements.sectorInput.value,
-      price: parseFloat(elements.priceInput.value),
-      change: parseFloat(elements.changeInput.value),
-      percentChange: parseFloat(elements.percentInput.value)
-    };
-    try {
-      if (editingIndex !== undefined) {
-        const response = await fetch(`/api/admin/stocks/${stockData.symbol}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
-          },
-          body: JSON.stringify(stockData)
-        });
-        if (!response.ok) throw new Error('Failed to update');
-        alert("Stock updated!");
-      } else {
-        const response = await fetch('/api/admin/stocks', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...(authToken && { 'Authorization': `Bearer ${authToken}` })
-          },
-          body: JSON.stringify(stockData)
-        });
-        if (!response.ok) throw new Error('Failed to create');
-        alert("Stock added!");
-      }
-      await loadStocks();
-      elements.addStockForm.reset();
-      elements.addStockForm.querySelector('button[type="submit"]').textContent = "Add Stock";
-      delete elements.addStockForm.dataset.editingIndex;
-    } catch (error) {
-      console.error('Admin form error:', error);
-      alert('Error saving stock.');
-    }
-  });
-}
 
+    const symbol = elements.symbolInput?.value?.trim()?.toUpperCase();
+    const company = elements.companyInput?.value?.trim();
+    const sector = elements.sectorInput?.value?.trim();
+    const price = Number(elements.priceInput?.value || 0);
+    const change = Number(elements.changeInput?.value || 0);
+    const percentChange = Number(elements.percentInput?.value || 0);
+    const editingTicker = elements.addStockForm.dataset.editingTicker;
 
-// ==============================
-// MARKET PAGE FUNCTIONS (search/filter)
-// ==============================
-function applyFilters() {
-  const searchText = (elements.searchInput?.value || "").trim().toLowerCase();
-  const sector = elements.sectorFilter?.value || "all";
-
-  const filtered = stocks.filter(stock =>
-    (sector === "all" || stock.sector === sector) &&
-    (stock.symbol.toLowerCase().includes(searchText) ||
-      stock.company.toLowerCase().includes(searchText))
-  );
-
-  renderTable(filtered);
-}
-
-function handleBuy(symbol) { alert(`Buy order for ${symbol}`); }
-function handleSell(symbol) { alert(`Sell order for ${symbol}`); }
-function showDetails(stock) {
-  // Details panel logic for market page
-  if (elements.detailsPlaceholder) elements.detailsPlaceholder.classList.add("hidden");
-  if (elements.detailsCard) elements.detailsCard.classList.remove("hidden");
-}
-
-// ==============================
-// CREATE ACCOUNT
-// ==============================
-
-// Create Account handler - only runs if register form exists
-document.addEventListener('DOMContentLoaded', () => {
-  const registerForm = document.getElementById('registerForm');
-  if (!registerForm) return; // Skip if not on create account page
-
-  registerForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-
-    const fullName = document.getElementById('fullName').value.trim();
-    const username = document.getElementById('username').value.trim();
-    const email = document.getElementById('email').value.trim();
-    const password = document.getElementById('password').value;
-
-    // Basic validation
-    if (!fullName || !username || !email || !password) {
-      alert('Please fill in all fields.');
+    if (!symbol || !company || !sector) {
+      alert("Please fill in all stock fields.");
       return;
     }
 
-    if (password.length < 6) {
-      alert('Password must be at least 6 characters.');
-      return;
-    }
+    const payload = { ticker: symbol, name: company, sector, price, priceChange: change };
 
     try {
-      const response = await apiFetch('/api/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ fullName, username, email, password })
-      });
-
-      const data = await response.json();
-
-      if (response.ok) {
-        alert(`✅ Account created successfully! You can now login at ${username}`);
-        window.location.href = 'login.html'; // Redirect to login
-      } else {
-        // Handle specific backend errors
-        const errorMsg = data.message || data.error || 'Registration failed';
-        alert(`❌ ${errorMsg}`);
-      }
-
-    } catch (err) {
-      console.error('Registration error:', err);
-      alert('❌ Network error. Please try again.');
-    }
-  });
-});
-
-
-// ==============================
-// LOGIN PAGE
-// ==============================
-
-// Login page handler - only runs if login form exists
-document.addEventListener('DOMContentLoaded', () => {
-  const loginForm = document.getElementById('loginForm');
-  if (!loginForm) return; // Skip if not on login page
-
-  // Login logic 
-  loginForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value;
-
-    try {
-      const response = await apiFetchetch('/api/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ username, password })
-      });
+      const response = await apiFetch(
+        editingTicker ? `/api/admin/stocks/${encodeURIComponent(editingTicker)}` : "/api/admin/stocks",
+        {
+          method: editingTicker ? "PATCH" : "POST",
+          body: JSON.stringify(payload)
+        }
+      );
 
       if (!response.ok) {
-        alert('Login failed. Check your credentials.');
-        return;
+        const err = await parseJsonSafely(response);
+        throw new Error(err?.message || "Failed to save stock");
       }
 
-      const data = await response.json();
-      localStorage.setItem('authToken', data.token);
+      alert(editingTicker ? "Stock updated." : "Stock created.");
+      elements.addStockForm.reset();
+      delete elements.addStockForm.dataset.editingTicker;
 
-      if (data.user?.role === 'admin') {
-        window.location.href = 'admin_home.html';
-      } else {
-        window.location.href = 'user_home.html';
-      }
-    } catch (err) {
-      alert('Login error. Please try again.');
+      const submitBtn = elements.addStockForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.textContent = "Add Stock";
+
+      await loadStocks();
+    } catch (error) {
+      console.error("Admin form error:", error);
+      alert(error.message || "Error saving stock.");
     }
   });
-});
-
-// ==============================
-// CONTACT FORM
-// ==============================
+}
 
 function initContactForm() {
   if (!elements.contactForm || !elements.confirmationMessage) return;
 
-  elements.contactForm.addEventListener("submit", (e) => {
-    e.preventDefault();
+  elements.contactForm.addEventListener("submit", (event) => {
+    event.preventDefault();
     elements.contactForm.reset();
     elements.confirmationMessage.style.display = "block";
-    setTimeout(() => elements.confirmationMessage.style.display = "none", 5000);
+    setTimeout(() => {
+      elements.confirmationMessage.style.display = "none";
+    }, 5000);
   });
 }
 
-// ==============================
-// SINGLE INITIALIZATION - Everything starts here
-// ==============================
-
-async function loadStocks() {
-  try {
-    const response = await apiFetch('/api/stocks');
-    if (!response.ok) throw new Error('Failed to load stocks');
-    const rawStocks = await response.json();
-    stocks = rawStocks.map(stock => ({
-      symbol: stock.symbol || stock.ticker,
-      company: stock.company || stock.name,
-      sector: stock.sector,
-      price: stock.price || stock.currentPrice || 0,
-      change: stock.change || stock.priceChange || 0,
-      percentChange: stock.percentChange || stock.changePercent || 0
-    }));
-    renderTable(stocks);
-    renderAdminTable(stocks);
-    renderPopularStocks();
-  } catch (error) {
-    console.error('Error loading stocks:', error);
-    stocks = [];
-    renderTable([]);
-    renderAdminTable([]);
-  }
-}
-
-// ==============================
-
-document.addEventListener("DOMContentLoaded", async () => {
-  // Define elements AFTER DOM loads
-  window.elements = {
-    tableBody: document.getElementById("stockTable")?.querySelector("tbody"),
-    adminTableBody: document.getElementById("adminTableBody"),
-    searchInput: document.getElementById("searchInput"),
-    sectorFilter: document.getElementById("sectorFilter"),
-    adminSearch: document.getElementById("adminSearch"),
-    stockCount: document.getElementById("stockCount"),
-    clearAllBtn: document.getElementById("clearAllBtn"),
-    addStockForm: document.getElementById("addStockForm"),
-    symbolInput: document.getElementById("symbolInput"),
-    companyInput: document.getElementById("companyInput"),
-    sectorInput: document.getElementById("sectorInput"),
-    priceInput: document.getElementById("priceInput"),
-    changeInput: document.getElementById("changeInput"),
-    percentInput: document.getElementById("percentInput"),
-    detailsPlaceholder: document.getElementById("detailsPlaceholder"),
-    detailsCard: document.getElementById("stockDetails"),
-    stockList: document.getElementById("stock-list"),
-    contactForm: document.getElementById("contact-form"),
-    confirmationMessage: document.getElementById("confirmation-message")
-  };
-
-  await loadStocks();
-  updateStockCount();
-
-  // Render Functions
-  renderPopularStocks();
-  if (elements.tableBody) renderTable(stocks);
-  if (elements.adminTableBody) renderAdminTable(stocks);
-  initAdminForm();
-  initContactForm();
-
-  // Event listeners
-  if (elements.searchInput) elements.searchInput.addEventListener("input", applyFilters);
-});
-
-
-// ==============================
-// User Home Page JavaScript
-// ==============================
-// User Home Page - Dynamic Portfolio & Cash
-
-let portfolioData = []; // Will be populated from backend
-
-// Color palette for pie slices
-const colorPalette = [
-  '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0',
-  '#9966FF', '#FF9F40', '#FF6384', '#C9CBCF'
-];
-
-async function loadUserData() {
-  try {
-    // Fetch portfolio and cash from backend API
-    const response = await fetch('/api/user/dashboard');
-
-    if (!response.ok) {
-      throw new Error('Failed to load dashboard data');
-    }
-
-    const data = await response.json();
-
-    portfolioData = data.portfolio || [];
-    updateCashBalance(data.cashBalance || 0);
-    updatePortfolioDisplay();
-
-  } catch (error) {
-    console.error('Error loading dashboard:', error);
-    document.getElementById('portfolioTitle').textContent = 'Error loading portfolio';
-  }
-}
-
 function updateCashBalance(amount) {
-  const cashEl = document.getElementById('cashBalance');
-  cashEl.textContent = amount.toLocaleString();
-}
-
-function updatePortfolioDisplay() {
-  const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
-  const titleEl = document.getElementById('portfolioTitle');
-
-  if (totalValue === 0) {
-    titleEl.textContent = 'Portfolio Allocation (No holdings)';
-    document.querySelector('.pie-legend').innerHTML = '<div>No stocks held</div>';
-    return;
+  const cashEl = requireElement("cashBalance");
+  if (cashEl) {
+    cashEl.textContent = Number(amount).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
   }
-
-  titleEl.textContent = `Portfolio Allocation (Total Value: $${totalValue.toLocaleString()})`;
-  updatePieLegend();
-  drawPieChart();
 }
 
 function updatePieLegend() {
-  const legendEl = document.getElementById('pieLegend');
-  legendEl.innerHTML = portfolioData.map((item, index) =>
-    `<div><span class="legend-color" style="background: ${colorPalette[index % colorPalette.length]};"></span>${item.symbol} ($${item.value.toLocaleString()})</div>`
-  ).join('');
+  const legendEl = requireElement("pieLegend");
+  if (!legendEl) return;
+
+  legendEl.innerHTML = portfolioData.map((item, index) => `
+    <div>
+      <span class="legend-color" style="background: ${colorPalette[index % colorPalette.length]};"></span>
+      ${item.ticker} ($${item.value.toLocaleString()})
+    </div>
+  `).join("");
 }
 
 function drawPieChart() {
-  const canvas = document.getElementById('portfolioPie');
-  if (!canvas || portfolioData.length === 0) return;
+  const canvas = requireElement("portfolioPie");
+  if (!canvas || !portfolioData.length) return;
 
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
   const centerX = canvas.width / 2;
   const centerY = canvas.height / 2;
-  const radius = 180;
-
+  const radius = Math.min(centerX, centerY) - 10;
   const total = portfolioData.reduce((sum, item) => sum + item.value, 0);
-  let startAngle = 0;
 
+  let startAngle = 0;
   portfolioData.forEach((item, index) => {
     const sliceAngle = (item.value / total) * 2 * Math.PI;
-    const color = colorPalette[index % colorPalette.length];
 
-    ctx.fillStyle = color;
-    ctx.strokeStyle = '#fff';
-    ctx.lineWidth = 3;
+    ctx.fillStyle = colorPalette[index % colorPalette.length];
+    ctx.strokeStyle = "#fff";
+    ctx.lineWidth = 2;
 
     ctx.beginPath();
     ctx.moveTo(centerX, centerY);
@@ -525,315 +455,260 @@ function drawPieChart() {
   });
 }
 
-// Auto-refresh every 30 seconds (or call manually after buy/sell)
+function updatePortfolioDisplay() {
+  const titleEl = requireElement("portfolioTitle");
+  const pieLegendEl = document.querySelector(".pie-legend") || requireElement("pieLegend");
+  if (!titleEl) return;
+
+  const totalValue = portfolioData.reduce((sum, item) => sum + item.value, 0);
+
+  if (!portfolioData.length || totalValue === 0) {
+    titleEl.textContent = "Portfolio Allocation (No holdings)";
+    if (pieLegendEl) pieLegendEl.innerHTML = "<div>No stocks held</div>";
+    return;
+  }
+
+  titleEl.textContent = `Portfolio Allocation (Total Value: $${totalValue.toLocaleString()})`;
+  updatePieLegend();
+  drawPieChart();
+}
+
+async function loadUserData() {
+  const portfolioTitle = requireElement("portfolioTitle");
+  if (!portfolioTitle) return;
+
+  try {
+    const response = await apiFetch("/api/trades/portfolio");
+    if (!response.ok) throw new Error("Failed to load portfolio");
+
+    const data = await response.json();
+    const holdings = Array.isArray(data) ? data : (data.portfolio || data.holdings || []);
+    const cashBalance = data.cashBalance ?? data.cash ?? data.availableCash ?? 0;
+
+    portfolioData = holdings.map(normalizePortfolioEntry);
+    updateCashBalance(cashBalance);
+    updatePortfolioDisplay();
+  } catch (error) {
+    console.error("Error loading dashboard:", error);
+    portfolioTitle.textContent = "Error loading portfolio";
+  }
+}
+
 function refreshDashboard() {
   loadUserData();
 }
-
-// Global function for other pages to trigger refresh (e.g. after buy/sell)
 window.refreshUserDashboard = refreshDashboard;
 
-// ==============================
-// User Buy Stock Market Page
-// ==============================
-let availableStocks = [];
-
 async function loadAvailableStocks() {
+  const tbody = requireElement("stocksTableBody");
+  if (!tbody) return;
+
   try {
-    const response = await fetch('/api/stocks');
+    const response = await apiFetch("/api/stocks");
+    if (!response.ok) throw new Error("Failed to load stocks");
 
-    if (!response.ok) throw new Error('Failed to load stocks');
-
-    availableStocks = await response.json();
+    availableStocks = (await response.json()).map(normalizeStock);
     populateStocksTable();
-
   } catch (error) {
-    console.error('Error loading stocks:', error);
-    document.getElementById('stocksTableBody').innerHTML =
-      '<tr><td colspan="7" style="text-align: center; color: #dc2626;">Error loading stocks</td></tr>';
+    console.error("Error loading stocks:", error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#dc2626;">Error loading stocks</td></tr>';
   }
 }
 
 function populateStocksTable(stocksToShow = availableStocks) {
-  const tbody = document.getElementById('stocksTableBody');
+  const tbody = requireElement("stocksTableBody");
+  if (!tbody) return;
 
-  if (stocksToShow.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" style="text-align: center;">No stocks available</td></tr>';
+  if (!stocksToShow.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No stocks available</td></tr>';
     return;
   }
 
-  tbody.innerHTML = stocksToShow.map(stock => {
-    const isPositive = stock.priceChange >= 0;
-    const changePercent = ((stock.priceChange / (stock.price - stock.priceChange)) * 100).toFixed(2);
-
-    return `
-      <tr>
-        <td>${stock.name}</td>
-        <td><strong>${stock.ticker}</strong></td>
-        <td>${stock.sector}</td>
-        <td class="price">$${stock.price.toLocaleString()}</td>
-        <td class="${isPositive ? 'positive' : 'negative'}">
-          ${isPositive ? '+' : ''}$${Math.abs(stock.priceChange).toLocaleString()}
-        </td>
-        <td class="${isPositive ? 'positive' : 'negative'}">
-          ${isPositive ? '+' : ''}${changePercent}%
-        </td>
-        <td class="actions-cell">
-          <a href="user_buy_stocks.html?ticker=${stock.ticker}" class="btn-buy">Buy</a>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  tbody.innerHTML = stocksToShow.map((stock) => `
+    <tr>
+      <td>${stock.company}</td>
+      <td><strong>${stock.symbol}</strong></td>
+      <td>${stock.sector}</td>
+      <td class="price">$${stock.price.toLocaleString()}</td>
+      <td class="${stock.change >= 0 ? "positive" : "negative"}">
+        ${stock.change >= 0 ? "+" : ""}$${Math.abs(stock.change).toLocaleString()}
+      </td>
+      <td class="${stock.percentChange >= 0 ? "positive" : "negative"}">
+        ${stock.percentChange >= 0 ? "+" : ""}${stock.percentChange.toFixed(2)}%
+      </td>
+      <td class="actions-cell">
+        <a href="user_buy_stocks.html?ticker=${encodeURIComponent(stock.symbol)}" class="btn-buy">Buy</a>
+      </td>
+    </tr>
+  `).join("");
 }
 
-// Sector filter 
-document.getElementById('stockFilter')?.addEventListener('change', function () {
-  const filter = this.value;
-  const filteredStocks = filter === 'all'
-    ? availableStocks
-    : availableStocks.filter(stock => stock.sector.toLowerCase().includes(filter));
-  populateStocksTable(filteredStocks);
-});
-
-// ==============================
-// User Portfolio Page Function
-// ==============================
-let userPortfolio = [];
-
 async function loadUserPortfolio() {
+  const tbody = requireElement("portfolioTableBody");
+  if (!tbody) return;
+
   try {
-    const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
-      headers: {
-        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-      }
-    });
+    const response = await apiFetch("/api/trades/portfolio");
+    if (!response.ok) throw new Error("Failed to load portfolio");
 
-    if (!response.ok) throw new Error('Failed to load portfolio');
-
-    userPortfolio = await response.json();
+    const data = await response.json();
+    const holdings = Array.isArray(data) ? data : (data.portfolio || data.holdings || []);
+    userPortfolio = holdings.map(normalizePortfolioEntry);
     populatePortfolioTable();
-
   } catch (error) {
-    console.error('Error loading portfolio:', error);
-    document.getElementById('portfolioTableBody').innerHTML =
-      '<tr><td colspan="6" style="text-align: center; color: #dc2626;">Error loading portfolio</td></tr>';
+    console.error("Error loading portfolio:", error);
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#dc2626;">Error loading portfolio</td></tr>';
   }
 }
 
 function populatePortfolioTable() {
-  const tbody = document.getElementById('portfolioTableBody');
-  const totalValueEl = document.getElementById('totalPortfolioValue');
+  const tbody = requireElement("portfolioTableBody");
+  const totalValueEl = requireElement("totalPortfolioValue");
+  if (!tbody) return;
 
-  if (userPortfolio.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" style="text-align: center;">No stocks owned</td></tr>';
-    totalValueEl.textContent = '$0.00';
+  if (!userPortfolio.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">No stocks owned</td></tr>';
+    if (totalValueEl) totalValueEl.textContent = "$0.00";
     return;
   }
 
   const totalPortfolioValue = userPortfolio.reduce((sum, holding) => sum + holding.totalValue, 0);
-  totalValueEl.textContent = `$${totalPortfolioValue.toLocaleString()}`;
+  if (totalValueEl) {
+    totalValueEl.textContent = `$${totalPortfolioValue.toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    })}`;
+  }
 
-  tbody.innerHTML = userPortfolio.map(holding => {
-    return `
-      <tr>
-        <td>${holding.name}</td>
-        <td><strong>${holding.ticker}</strong></td>
-        <td class="price">$${holding.pricePerShare.toLocaleString()}</td>
-        <td><strong>${holding.sharesOwned.toLocaleString()}</strong></td>
-        <td class="price">$${holding.totalValue.toLocaleString()}</td>
-        <td class="actions-cell">
-          <a href="user_sell_stock.html?ticker=${holding.ticker}&shares=${holding.sharesOwned}" class="btn-sell">Sell</a>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  tbody.innerHTML = userPortfolio.map((holding) => `
+    <tr>
+      <td>${holding.name}</td>
+      <td><strong>${holding.ticker}</strong></td>
+      <td class="price">$${holding.pricePerShare.toLocaleString()}</td>
+      <td><strong>${holding.sharesOwned.toLocaleString()}</strong></td>
+      <td class="price">$${holding.totalValue.toLocaleString()}</td>
+      <td class="actions-cell">
+        <a href="user_sell_stocks.html?ticker=${encodeURIComponent(holding.ticker)}&shares=${holding.sharesOwned}" class="btn-sell">Sell</a>
+      </td>
+    </tr>
+  `).join("");
 }
 
-// ==============================
-// Sell Stocks Page Function
-// ==============================
-
 async function loadUserPortfolioForSell() {
+  const select = requireElement("stockSelect");
+  if (!select) return;
+
   try {
-    const response = await fetch('/api/user/portfolio');
-    if (!response.ok) throw new Error('Failed to load portfolio');
+    const response = await apiFetch("/api/trades/portfolio");
+    if (!response.ok) throw new Error("Failed to load portfolio");
 
-    userPortfolio = await response.json();
+    const data = await response.json();
+    const holdings = Array.isArray(data) ? data : (data.portfolio || data.holdings || []);
+    userPortfolio = holdings.map(normalizePortfolioEntry);
     populateStockSelect();
-
   } catch (error) {
-    console.error('Error:', error);
-    document.getElementById('stockSelect').innerHTML = '<option>Error loading portfolio</option>';
+    console.error("Error loading sell portfolio:", error);
+    select.innerHTML = "<option>Error loading portfolio</option>";
   }
 }
 
 function populateStockSelect() {
-  const select = document.getElementById('stockSelect');
+  const select = requireElement("stockSelect");
+  if (!select) return;
+
   select.innerHTML = '<option value="">Choose a stock...</option>';
 
-  userPortfolio.forEach(stock => {
-    select.innerHTML += `<option value="${stock.ticker}" data-shares="${stock.sharesOwned}" data-price="${stock.pricePerShare}">
-      ${stock.name} (${stock.ticker}) - ${stock.sharesOwned} shares
-    </option>`;
+  userPortfolio.forEach((stock) => {
+    select.innerHTML += `
+      <option value="${stock.ticker}" data-shares="${stock.sharesOwned}" data-price="${stock.pricePerShare}">
+        ${stock.name} (${stock.ticker}) - ${stock.sharesOwned} shares
+      </option>
+    `;
   });
 }
 
-document.getElementById('stockSelect').addEventListener('change', function () {
-  const selectedOption = this.options[this.selectedIndex];
-  const sharesOwned = parseInt(selectedOption.dataset.shares);
-  const pricePerShare = parseFloat(selectedOption.dataset.price);
-
-  const stockInfo = document.getElementById('stockInfo');
-  if (this.value) {
-    stockInfo.textContent = `${selectedOption.textContent} | Current Price: $${pricePerShare.toLocaleString()}`;
-  } else {
-    stockInfo.textContent = '';
-  }
-
-  // Update shares input max
-  const sharesInput = document.getElementById('sharesToSell');
-  sharesInput.max = sharesOwned;
-  sharesInput.value = '';
-  document.getElementById('sharesError').style.display = 'none';
-});
-
-document.getElementById('sellForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-
-  const ticker = document.getElementById('stockSelect').value;
-  const sharesInput = document.getElementById('sharesToSell');
-  const sharesToSell = parseInt(sharesInput.value);
-
-  if (!validateSellInput(ticker, sharesToSell)) return;
-
-  const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
-  const pricePerShare = parseFloat(selectedOption.dataset.price);
-  const totalSellValue = sharesToSell * pricePerShare;
-
-  showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue);
-});
-
 function validateSellInput(ticker, sharesToSell) {
-  const sharesError = document.getElementById('sharesError');
+  const sharesError = requireElement("sharesError");
   const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
-  const sharesOwned = parseInt(selectedOption.dataset.shares);
+  if (!selectedOption) return false;
+
+  const sharesOwned = Number(selectedOption.dataset.shares || 0);
 
   if (!ticker) {
-    sharesError.textContent = 'Please select a stock';
-    sharesError.style.display = 'block';
+    if (sharesError) {
+      sharesError.textContent = "Please select a stock";
+      sharesError.style.display = "block";
+    }
     return false;
   }
 
   if (!sharesToSell || sharesToSell <= 0) {
-    sharesError.textContent = 'Enter a valid number of shares (1 or more)';
-    sharesError.style.display = 'block';
+    if (sharesError) {
+      sharesError.textContent = "Enter a valid number of shares";
+      sharesError.style.display = "block";
+    }
     return false;
   }
 
   if (sharesToSell > sharesOwned) {
-    sharesError.textContent = `You only own ${sharesOwned} shares`;
-    sharesError.style.display = 'block';
+    if (sharesError) {
+      sharesError.textContent = `You only own ${sharesOwned} shares`;
+      sharesError.style.display = "block";
+    }
     return false;
   }
 
-  sharesError.style.display = 'none';
+  if (sharesError) sharesError.style.display = "none";
   return true;
 }
 
 function showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue) {
+  const confirmDetails = requireElement("confirmDetails");
+  const modal = requireElement("confirmModal");
   const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
-  const stockName = selectedOption.textContent.split(' (')[0];
+  if (!confirmDetails || !modal || !selectedOption) return;
 
-  document.getElementById('confirmDetails').innerHTML = `
+  const stockName = selectedOption.textContent.split(" (")[0];
+  confirmDetails.innerHTML = `
     <div><span class="label">Stock:</span><span class="value">${stockName}</span></div>
     <div><span class="label">Ticker:</span><span class="value">${ticker}</span></div>
     <div><span class="label">Shares to Sell:</span><span class="value">${sharesToSell.toLocaleString()}</span></div>
     <div><span class="label">Price per Share:</span><span class="value">$${pricePerShare.toLocaleString()}</span></div>
-    <div style="border-top: 2px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
+    <div style="border-top:2px solid #e5e7eb; padding-top:12px; margin-top:12px;">
       <span class="label">Total Sell Value:</span>
       <span class="value positive">$${totalSellValue.toLocaleString()}</span>
     </div>
   `;
-
-  document.getElementById('confirmModal').style.display = 'flex';
+  modal.style.display = "flex";
 }
 
-document.getElementById('cancelSellBtn').addEventListener('click', function () {
-  document.getElementById('confirmModal').style.display = 'none';
-});
-
-document.getElementById('confirmSellBtn').addEventListener('click', async function () {
-  const ticker = document.getElementById('stockSelect').value;
-  const sharesToSell = parseInt(document.getElementById('sharesToSell').value);
-
-  try {
-    const response = await fetch('/api/trades/sell', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ ticker, shares: sharesToSell })
-    });
-
-    if (response.ok) {
-      alert('Sell order confirmed! Portfolio updated.');
-      window.refreshUserDashboard?.(); // Refresh dashboard if available
-      document.getElementById('confirmModal').style.display = 'none';
-      document.getElementById('sellForm').reset();
-      loadUserPortfolioForSell(); // Reload portfolio
-    } else {
-      alert('Sell failed. Please try again.');
-    }
-  } catch (error) {
-    alert('Error processing sell order.');
-  }
-});
-
-// ==============================
-// Transactions Page Function
-// ==============================
-
-let userTransactions = [];
-let filteredTransactions = [];
-
-// Load from backend API
 async function loadUserTransactions() {
+  const tbody = requireElement("transactionsTableBody");
+  if (!tbody) return;
+
   try {
-    const response = await fetch('/api/trades/transactions');
-    if (!response.ok) throw new Error('Failed to load transactions');
+    const response = await apiFetch("/api/trades/transactions");
+    if (!response.ok) throw new Error("Failed to load transactions");
 
-    userTransactions = await response.json();
-    // default filtered set = all
+    userTransactions = (await response.json()).map(normalizeTransaction);
     filteredTransactions = [...userTransactions];
-
     applySort();
     renderTransactionsTable();
-
   } catch (error) {
-    console.error('Error loading transactions:', error);
-    const tbody = document.getElementById('transactionsTableBody');
-    const msg = document.getElementById('transactionsEmptyMessage');
-
-    if (tbody) {
-      tbody.innerHTML =
-        '<tr><td colspan="7" style="text-align:center; color:#dc2626;">Error loading transactions</td></tr>';
-    }
-    if (msg) {
-      msg.style.display = 'none';
-    }
+    console.error("Error loading transactions:", error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#dc2626;">Error loading transactions</td></tr>';
   }
 }
 
-// Apply search + keep current sort
 function applySearch() {
-  const searchInput = document.getElementById('transactionSearch');
-  const query = (searchInput?.value || '').trim().toLowerCase();
+  const searchInput = requireElement("transactionSearch");
+  const query = (searchInput?.value || "").trim().toLowerCase();
 
   if (!query) {
     filteredTransactions = [...userTransactions];
   } else {
-    filteredTransactions = userTransactions.filter(tx => {
-      const name = (tx.stockName || '').toLowerCase();
-      const ticker = (tx.ticker || '').toLowerCase();
-      return name.includes(query) || ticker.includes(query);
+    filteredTransactions = userTransactions.filter((tx) => {
+      return tx.stockName.toLowerCase().includes(query) || tx.ticker.toLowerCase().includes(query);
     });
   }
 
@@ -841,263 +716,161 @@ function applySearch() {
   renderTransactionsTable();
 }
 
-// Apply sort order based on select
 function applySort() {
-  const sortSelect = document.getElementById('sortOrder');
-  const order = sortSelect ? sortSelect.value : 'newest';
+  const sortSelect = requireElement("sortOrder");
+  const order = sortSelect?.value || "newest";
 
   filteredTransactions.sort((a, b) => {
-    // Build a Date from date + time strings
-    const aDate = new Date(`${a.date}T${a.time || '00:00:00'}`);
-    const bDate = new Date(`${b.date}T${b.time || '00:00:00'}`);
-
-    return order === 'oldest' ? aDate - bDate : bDate - aDate;
+    const aDate = new Date(`${a.date}T${a.time || "00:00:00"}`);
+    const bDate = new Date(`${b.date}T${b.time || "00:00:00"}`);
+    return order === "oldest" ? aDate - bDate : bDate - aDate;
   });
 }
 
-// Render table body
 function renderTransactionsTable() {
-  const tbody = document.getElementById('transactionsTableBody');
-  const emptyMsg = document.getElementById('transactionsEmptyMessage');
+  const tbody = requireElement("transactionsTableBody");
+  const emptyMsg = requireElement("transactionsEmptyMessage");
   if (!tbody) return;
 
   if (!filteredTransactions.length) {
-    tbody.innerHTML =
-      '<tr><td colspan="7" style="text-align:center;">No transactions found</td></tr>';
-    if (emptyMsg) emptyMsg.style.display = 'block';
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No transactions found</td></tr>';
+    if (emptyMsg) emptyMsg.style.display = "block";
     return;
   }
 
-  if (emptyMsg) emptyMsg.style.display = 'none';
+  if (emptyMsg) emptyMsg.style.display = "none";
 
-  tbody.innerHTML = filteredTransactions.map(tx => {
-    const actionUpper = (tx.action || '').toUpperCase();
-    const isBuy = actionUpper === 'BUY' || actionUpper === 'BOUGHT';
-    const actionClass = isBuy ? 'action-buy' : 'action-sell';
-    const formattedTotalPrice = typeof tx.totalPrice === 'number'
-      ? `$${tx.totalPrice.toLocaleString()}`
-      : tx.totalPrice;
+  tbody.innerHTML = filteredTransactions.map((tx) => {
+    const actionUpper = tx.action.toUpperCase();
+    const isBuy = actionUpper === "BUY" || actionUpper === "BOUGHT";
+    const actionClass = isBuy ? "action-buy" : "action-sell";
 
     return `
       <tr>
-        <td>${tx.date || ''}</td>
-        <td>${tx.time || ''}</td>
-        <td>${tx.stockName || ''}</td>
-        <td><strong>${tx.ticker || ''}</strong></td>
-        <td>${tx.totalShares != null ? tx.totalShares.toLocaleString() : ''}</td>
-        <td class="price">${formattedTotalPrice || ''}</td>
-        <td class="${actionClass}">${isBuy ? 'Bought' : 'Sold'}</td>
+        <td>${tx.date}</td>
+        <td>${tx.time}</td>
+        <td>${tx.stockName}</td>
+        <td><strong>${tx.ticker}</strong></td>
+        <td>${tx.totalShares.toLocaleString()}</td>
+        <td class="price">$${tx.totalPrice.toLocaleString()}</td>
+        <td class="${actionClass}">${isBuy ? "Bought" : "Sold"}</td>
       </tr>
     `;
-  }).join('');
+  }).join("");
 }
 
-// Wire up events when this page loads
-document.addEventListener('DOMContentLoaded', () => {
-  if (!document.getElementById('transactionsTable')) return;
-
-  // Load data
-  loadUserTransactions();
-
-  // Search: button and Enter key
-  const searchBtn = document.getElementById('transactionSearchBtn');
-  const searchInput = document.getElementById('transactionSearch');
-
-  if (searchBtn) searchBtn.addEventListener('click', applySearch);
-  if (searchInput) {
-    searchInput.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') applySearch();
-    });
-  }
-
-  // Sort select
-  const sortSelect = document.getElementById('sortOrder');
-  if (sortSelect) {
-    sortSelect.addEventListener('change', () => {
-      applySort();
-      renderTransactionsTable();
-    });
-  }
-});
-
-// ==============================
-// Admin Home Page - Stocks, Market Hours, Holidays
-// ==============================
-
-let marketHoursData = null;
-
-// ------------------------------
-// Load and render stocks (max 15)
-// ------------------------------
 async function loadAdminHomeStocks() {
+  const tbody = requireElement("adminHomeStockTableBody");
+  if (!tbody) return;
+
   try {
-    // Needs to be adjusted to backend api
-    const response = await fetch('/api/stocks');
-    if (!response.ok) throw new Error('Failed to load stocks');
+    const response = await apiFetch("/api/stocks");
+    if (!response.ok) throw new Error("Failed to load stocks");
 
-    const allStocks = await response.json();
-    const limited = allStocks.slice(0, 15); // max 15 rows
-
-    const tbody = document.getElementById('adminHomeStockTableBody');
-    if (!tbody) return;
+    const allStocks = (await response.json()).map(normalizeStock);
+    const limited = allStocks.slice(0, 15);
 
     if (!limited.length) {
-      tbody.innerHTML =
-        '<tr><td colspan="7" style="text-align:center;">No stocks available</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">No stocks available</td></tr>';
       return;
     }
 
-    tbody.innerHTML = limited.map(stock => {
-      // Expecting: { ticker, name, sector, price, priceChange }
-      const isPositive = stock.priceChange >= 0;
-      const prevPrice = stock.price - stock.priceChange;
-      const changePercent = prevPrice > 0
-        ? ((stock.priceChange / prevPrice) * 100).toFixed(2)
-        : '0.00';
-
-      return `
-        <tr>
-          <td><strong>${stock.ticker}</strong></td>
-          <td>${stock.name}</td>
-          <td>${stock.sector}</td>
-          <td class="price">$${stock.price.toLocaleString()}</td>
-          <td class="${isPositive ? 'positive' : 'negative'}">
-            ${isPositive ? '+' : ''}$${Math.abs(stock.priceChange).toLocaleString()}
-          </td>
-          <td class="${isPositive ? 'positive' : 'negative'}">
-            ${isPositive ? '+' : ''}${changePercent}%
-          </td>
-          <td class="actions-cell">
-            <a href="admin_edit_stocks.html?ticker=${stock.ticker}" class="btn-edit">Edit</a>
-          </td>
-        </tr>
-      `;
-    }).join('');
+    tbody.innerHTML = limited.map((stock) => `
+      <tr>
+        <td><strong>${stock.symbol}</strong></td>
+        <td>${stock.company}</td>
+        <td>${stock.sector}</td>
+        <td class="price">$${stock.price.toLocaleString()}</td>
+        <td class="${stock.change >= 0 ? "positive" : "negative"}">
+          ${stock.change >= 0 ? "+" : ""}$${Math.abs(stock.change).toLocaleString()}
+        </td>
+        <td class="${stock.percentChange >= 0 ? "positive" : "negative"}">
+          ${stock.percentChange >= 0 ? "+" : ""}${stock.percentChange.toFixed(2)}%
+        </td>
+        <td class="actions-cell">
+          <a href="admin_edit_stocks.html?ticker=${encodeURIComponent(stock.symbol)}" class="btn-edit">Edit</a>
+        </td>
+      </tr>
+    `).join("");
   } catch (error) {
-    console.error('Error loading admin stocks:', error);
-    const tbody = document.getElementById('adminHomeStockTableBody');
-    if (tbody) {
-      tbody.innerHTML =
-        '<tr><td colspan="7" style="text-align:center; color:#dc2626;">Error loading stocks</td></tr>';
-    }
+    console.error("Error loading admin stocks:", error);
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#dc2626;">Error loading stocks</td></tr>';
   }
 }
 
-// ------------------------------
-// Load and render market hours + holidays
-// ------------------------------
 async function loadMarketHours() {
   try {
-    // Adjust this endpoint to your backend
-    const response = await fetch('/api/admin/market/hours');
-    if (!response.ok) throw new Error('Failed to load market hours');
+    const response = await apiFetch("/api/admin/market/hours");
+    if (!response.ok) throw new Error("Failed to load market hours");
 
     marketHoursData = await response.json();
-
     renderMarketHoursTable();
     renderHolidayHoursList();
     renderMarketCalendar();
   } catch (error) {
-    console.error('Error loading market hours:', error);
+    console.error("Error loading market hours:", error);
   }
 }
 
+function formatTime(hhmm) {
+  if (!hhmm) return "";
+  const [h, m] = String(hhmm).split(":").map(Number);
+  const date = new Date();
+  date.setHours(h, m, 0, 0);
+  return date.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" });
+}
+
 function renderMarketHoursTable() {
-  const container = document.getElementById('marketHoursTable');
+  const container = requireElement("marketHoursTable");
   if (!container || !marketHoursData?.weeklyHours) return;
 
-  container.innerHTML = marketHoursData.weeklyHours.map(entry => {
-    // Expecting: { day: "Monday", open: "09:30", close: "16:00" } or nulls for closed
+  container.innerHTML = marketHoursData.weeklyHours.map((entry) => {
     const isClosed = !entry.open || !entry.close;
-    const hoursText = isClosed
-      ? 'Closed'
-      : `${formatTime(entry.open)} – ${formatTime(entry.close)}`;
-
-    return `
-      <div class="hours-row">
-        <span>${entry.day}</span>
-        <span>${hoursText}</span>
-      </div>
-    `;
-  }).join('');
+    const hoursText = isClosed ? "Closed" : `${formatTime(entry.open)} – ${formatTime(entry.close)}`;
+    return `<div class="hours-row"><span>${entry.day}</span><span>${hoursText}</span></div>`;
+  }).join("");
 }
 
 function renderHolidayHoursList() {
-  const container = document.getElementById('holidayHoursList');
+  const container = requireElement("holidayHoursList");
   if (!container) return;
 
   const holidays = marketHoursData?.holidays || [];
-
   if (!holidays.length) {
     container.innerHTML = '<p class="note">No holiday hours configured.</p>';
     return;
   }
 
-  container.innerHTML = holidays.map(h => {
-    // Expecting: { date: "2026-01-01", type: "closed"|"short", label?, hours? }
+  container.innerHTML = holidays.map((h) => {
     const date = new Date(h.date);
-    const labelDate = date.toLocaleDateString(undefined, {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
+    const labelDate = date.toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 
-    let desc;
-    if (h.type === 'closed') {
-      desc = 'Closed';
-    } else if (h.type === 'short') {
-      desc = h.hours || 'Short day';
-    } else {
-      desc = h.hours || 'Hours set';
-    }
+    let desc = h.hours || "Hours set";
+    if (h.type === "closed") desc = "Closed";
+    if (h.type === "short") desc = h.hours || "Short day";
 
-    return `
-      <div class="hours-row">
-        <span>${labelDate}</span>
-        <span>${desc}${h.label ? ` (${h.label})` : ''}</span>
-      </div>
-    `;
-  }).join('');
+    return `<div class="hours-row"><span>${labelDate}</span><span>${desc}${h.label ? ` (${h.label})` : ""}</span></div>`;
+  }).join("");
 }
 
-// HH:mm -> 9:30 AM
-function formatTime(hhmm) {
-  if (!hhmm) return '';
-  const [h, m] = hhmm.split(':').map(Number);
-  const date = new Date();
-  date.setHours(h, m, 0, 0);
-  return date.toLocaleTimeString(undefined, {
-    hour: 'numeric',
-    minute: '2-digit'
-  });
-}
-
-// ------------------------------
-// Calendar using holidays from marketHoursData
-// ------------------------------
 function renderMarketCalendar() {
-  const calendarEl = document.getElementById('marketCalendar');
-  const monthLabelEl = document.getElementById('calendarMonthLabel');
+  const calendarEl = requireElement("marketCalendar");
+  const monthLabelEl = requireElement("calendarMonthLabel");
   if (!calendarEl || !monthLabelEl) return;
 
   const today = new Date();
   const year = today.getFullYear();
-  const month = today.getMonth(); // 0-11
+  const month = today.getMonth();
 
-  const monthNames = [
-    'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
-  ];
-  const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+  const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
   monthLabelEl.textContent = `${monthNames[month]} ${year}`;
+  calendarEl.innerHTML = "";
 
-  calendarEl.innerHTML = '';
-
-  // Day labels
-  dayNames.forEach(d => {
-    const el = document.createElement('div');
-    el.className = 'day-label';
+  dayNames.forEach((d) => {
+    const el = document.createElement("div");
+    el.className = "day-label";
     el.textContent = d;
     calendarEl.appendChild(el);
   });
@@ -1105,318 +878,262 @@ function renderMarketCalendar() {
   const firstDay = new Date(year, month, 1);
   const startWeekday = firstDay.getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Holidays that fall in this month
-  const holidays = (marketHoursData?.holidays || []).filter(h => {
+  const holidays = (marketHoursData?.holidays || []).filter((h) => {
     const d = new Date(h.date);
     return d.getFullYear() === year && d.getMonth() === month;
   });
 
   const holidayMap = {};
-  holidays.forEach(h => {
-    const d = new Date(h.date).getDate();
-    holidayMap[d] = h;
+  holidays.forEach((h) => {
+    holidayMap[new Date(h.date).getDate()] = h;
   });
 
-  // Blank cells before first of month
-  for (let i = 0; i < startWeekday; i++) {
-    const empty = document.createElement('div');
-    empty.className = 'day-cell';
+  for (let i = 0; i < startWeekday; i += 1) {
+    const empty = document.createElement("div");
+    empty.className = "day-cell";
     calendarEl.appendChild(empty);
   }
 
-  // Actual days
-  for (let day = 1; day <= daysInMonth; day++) {
-    const cell = document.createElement('div');
-    cell.className = 'day-cell';
-    cell.textContent = day;
+  for (let day = 1; day <= daysInMonth; day += 1) {
+    const cell = document.createElement("div");
+    cell.className = "day-cell";
+    cell.textContent = String(day);
 
     const holiday = holidayMap[day];
     if (holiday) {
-      if (holiday.type === 'closed') cell.classList.add('closed');
-      if (holiday.type === 'short') cell.classList.add('short');
-      cell.title = holiday.label || '';
+      if (holiday.type === "closed") cell.classList.add("closed");
+      if (holiday.type === "short") cell.classList.add("short");
+      cell.title = holiday.label || "";
     }
 
     calendarEl.appendChild(cell);
   }
 }
 
-// ------------------------------
-// Initialization
-// ------------------------------
-document.addEventListener('DOMContentLoaded', () => {
+function initRegisterPage() {
+  const registerForm = requireElement("registerForm");
+  if (!registerForm) return;
 
+  registerForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
 
-  // Only run on admin home
-  if (!document.getElementById('adminHomeStockTableBody')) return;
+    const fullName = requireElement("fullName")?.value?.trim();
+    const email = requireElement("email")?.value?.trim();
+    const password = requireElement("password")?.value || "";
 
-  loadAdminHomeStocks();
-  loadMarketHours();
-});
-
-// -----------------------------
-// USER DEPOSIT PAGE FUNCTIONS
-// -----------------------------
-
-document.addEventListener('DOMContentLoaded', () => {
-
-  const depositForm = document.getElementById('depositForm');
-  if (!depositForm) return;
-
-  const currentPowerEl = document.getElementById('currentPower');
-  const depositAmountEl = document.getElementById('depositAmount');
-  const paymentSelectEl = document.getElementById('paymentSelect');
-  const savePaymentEl = document.getElementById('savePayment');
-
-  const newPaymentFields = document.getElementById('newPaymentFields');
-
-  const modalOverlay = document.getElementById('modalOverlay');
-  const modalAmountEl = document.getElementById('modalDepositAmount');
-  const modalConfirmBtn = document.getElementById('modalConfirm');
-  const modalCancelBtn = document.getElementById('modalCancel');
-
-  const messageEl = document.getElementById('depositMessage');
-
-  let currentPurchasingPower = 0;
-  let pendingDepositAmount = 0;
-
-  // -----------------------------
-  // Fetch user's purchasing power
-  // -----------------------------
-  async function loadPurchasingPower() {
-    try {
-      const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-      });
-
-      if (!response.ok) throw new Error('Failed to load portfolio');
-
-      const portfolio = await response.json();
-      currentPurchasingPower = portfolio.cash || 0;
-      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
-    } catch (err) {
-      console.error('Error loading purchasing power:', err);
-      currentPowerEl.textContent = 'Error';
-    }
-  }
-
-  // -----------------------------
-  // Fetch saved payment methods
-  // -----------------------------
-  async function loadSavedPaymentMethods() {
-    try {
-      const response = await fetch(`${API_ORIGIN}/api/users/payment-methods`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
-      });
-
-      if (!response.ok) throw new Error('Failed to load payment methods');
-
-      const methods = await response.json();
-
-      // Reset options
-      paymentSelectEl.innerHTML = '<option value="">Use new payment method</option>';
-
-      methods.forEach(method => {
-        const opt = document.createElement('option');
-        opt.value = method.id;
-        opt.textContent = method.label;
-        paymentSelectEl.appendChild(opt);
-      });
-
-      // Show/hide new payment fields
-      toggleNewPaymentFields();
-    } catch (err) {
-      console.error('Error loading payment methods:', err);
-    }
-  }
-
-  // -----------------------------
-  // Show/hide new card fields
-  // -----------------------------
-  function toggleNewPaymentFields() {
-    if (paymentSelectEl.value === '') {
-      newPaymentFields.style.display = 'block';
-    } else {
-      newPaymentFields.style.display = 'none';
-    }
-  }
-
-  paymentSelectEl.addEventListener('change', toggleNewPaymentFields);
-
-  // -----------------------------
-  // Handle deposit submission
-  // -----------------------------
-  depositForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    messageEl.textContent = '';
-
-    const depositAmount = parseFloat(depositAmountEl.value);
-
-    if (isNaN(depositAmount) || depositAmount <= 0) {
-      messageEl.textContent = '❌ Please enter a valid amount greater than 0';
+    if (!fullName || !email || !password) {
+      alert("Please fill in all fields.");
       return;
     }
 
-    pendingDepositAmount = depositAmount;
-    modalAmountEl.textContent = `$${pendingDepositAmount.toLocaleString()}`;
-    modalOverlay.classList.remove('hidden');
-  });
-
-  // -----------------------------
-  // Modal Confirm
-  // -----------------------------
-  modalConfirmBtn.addEventListener('click', async () => {
-    modalOverlay.classList.add('hidden');
-
     try {
-      const selectedPayment = paymentSelectEl.value;
-      const savePayment = savePaymentEl.checked;
-
-      const bodyData = {
-        amount: pendingDepositAmount,
-        paymentMethod: selectedPayment,
-        savePayment
-      };
-
-      // Only include new card info if "Use new payment method" selected
-      if (selectedPayment === '') {
-        bodyData.cardName = document.getElementById('cardName').value;
-        bodyData.cardNumber = document.getElementById('cardNumber').value;
-        bodyData.cardExp = document.getElementById('cardExp').value;
-        bodyData.cardCVV = document.getElementById('cardCVV').value;
-      }
-
-      const response = await fetch(`${API_ORIGIN}/api/trades/deposit`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('authToken')}`
-        },
-        body: JSON.stringify(bodyData)
+      const response = await apiFetch("/api/auth/register", {
+        method: "POST",
+        body: JSON.stringify({ fullName, email, password })
       });
 
-      const data = await response.json();
+      const data = await parseJsonSafely(response);
+      if (!response.ok) {
+        throw new Error(data?.message || data?.error || "Registration failed");
+      }
 
-      if (response.ok) {
-        currentPurchasingPower += pendingDepositAmount;
-        currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
-        messageEl.textContent =
-          `✅ Deposit successful! Your new purchasing power is $${currentPurchasingPower.toLocaleString()}`;
-        depositForm.reset();
-        toggleNewPaymentFields();
-        loadSavedPaymentMethods(); // reload in case a new card was saved
+      alert("Account created successfully. Please log in.");
+      window.location.href = "login.html";
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert(error.message || "Registration failed.");
+    }
+  });
+}
+
+function initLoginPage() {
+  const loginForm = requireElement("loginForm");
+  if (!loginForm) return;
+
+  loginForm.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    const email = requireElement("email")?.value?.trim() || requireElement("username")?.value?.trim();
+    const password = requireElement("password")?.value || "";
+
+    if (!email || !password) {
+      alert("Please enter your email and password.");
+      return;
+    }
+
+    try {
+      const response = await apiFetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email, password })
+      });
+
+      const data = await parseJsonSafely(response);
+      if (!response.ok) {
+        throw new Error(data?.message || "Login failed. Check your credentials.");
+      }
+
+      setAuthToken(data?.token);
+
+      if (data?.user?.role === "ADMIN" || data?.user?.role === "admin") {
+        window.location.href = "admin_home.html";
       } else {
-        const errMsg = data.message || 'Deposit failed. Please try again.';
-        messageEl.textContent = `❌ ${errMsg}`;
+        window.location.href = "user_home.html";
       }
-    } catch (err) {
-      console.error('Deposit error:', err);
-      messageEl.textContent = '❌ Network error. Please try again.';
+    } catch (error) {
+      console.error("Login error:", error);
+      alert(error.message || "Login failed.");
     }
   });
+}
 
-  // -----------------------------
-  // Modal Cancel
-  // -----------------------------
-  modalCancelBtn.addEventListener('click', () => {
-    modalOverlay.classList.add('hidden');
+function initStocksFilterPage() {
+  const stockFilter = requireElement("stockFilter");
+  if (!stockFilter) return;
+
+  stockFilter.addEventListener("change", function onChange() {
+    const filter = this.value;
+    const filtered = filter === "all"
+      ? availableStocks
+      : availableStocks.filter((stock) => stock.sector.toLowerCase().includes(filter.toLowerCase()));
+    populateStocksTable(filtered);
   });
+}
 
-  // -----------------------------
-  // Initial load
-  // -----------------------------
-  loadPurchasingPower();
-  loadSavedPaymentMethods();
+function initSellPage() {
+  const stockSelect = requireElement("stockSelect");
+  const sellForm = requireElement("sellForm");
+  const cancelSellBtn = requireElement("cancelSellBtn");
+  const confirmSellBtn = requireElement("confirmSellBtn");
 
-});
+  if (stockSelect) {
+    stockSelect.addEventListener("change", function onSelectChange() {
+      const selectedOption = this.options[this.selectedIndex];
+      const sharesOwned = Number(selectedOption?.dataset?.shares || 0);
+      const pricePerShare = Number(selectedOption?.dataset?.price || 0);
+      const stockInfo = requireElement("stockInfo");
+      const sharesInput = requireElement("sharesToSell");
+      const sharesError = requireElement("sharesError");
 
-// -----------------------------
-// Withdrawal Page Functions
-// -----------------------------
+      if (this.value && stockInfo) {
+        stockInfo.textContent = `${selectedOption.textContent} | Current Price: $${pricePerShare.toLocaleString()}`;
+      } else if (stockInfo) {
+        stockInfo.textContent = "";
+      }
 
-document.addEventListener('DOMContentLoaded', () => {
-
-  const withdrawForm      = document.getElementById('withdrawForm');
-  const currentPowerEl    = document.getElementById('currentPower');
-  const withdrawAmountEl  = document.getElementById('withdrawAmount');
-  const bankNameEl        = document.getElementById('bankName');
-  const bankAccountEl     = document.getElementById('bankAccount');
-  const bankRoutingEl     = document.getElementById('bankRouting');
-  const messageEl         = document.getElementById('withdrawMessage');
-
-  const modalOverlay      = document.getElementById('modalOverlay');
-  const modalAmountEl     = document.getElementById('modalWithdrawAmount');
-  const modalBankEl       = document.getElementById('modalBankAccount');
-  const modalConfirmBtn   = document.getElementById('modalConfirm');
-  const modalCancelBtn    = document.getElementById('modalCancel');
-
-  let currentPurchasingPower = 0;
-  let pendingWithdrawAmount = 0;
-
-  // MOCK: Load current purchasing power
-  async function loadPurchasingPower() {
-    try {
-      const portfolio = { cash: 5000 }; // Mocked for development
-      currentPurchasingPower = portfolio.cash;
-      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
-    } catch (err) {
-      console.error(err);
-      currentPowerEl.textContent = 'Error';
-    }
+      if (sharesInput) {
+        sharesInput.max = String(sharesOwned);
+        sharesInput.value = "";
+      }
+      if (sharesError) sharesError.style.display = "none";
+    });
   }
 
-  loadPurchasingPower();
+  if (sellForm) {
+    sellForm.addEventListener("submit", (event) => {
+      event.preventDefault();
 
-  // Handle form submission
-  withdrawForm.addEventListener('submit', (e) => {
-    e.preventDefault();
-    messageEl.textContent = '';
+      const ticker = requireElement("stockSelect")?.value || "";
+      const sharesToSell = Number(requireElement("sharesToSell")?.value || 0);
+      if (!validateSellInput(ticker, sharesToSell)) return;
 
-    const amount = parseFloat(withdrawAmountEl.value);
-    if (isNaN(amount) || amount <= 0) {
-      messageEl.textContent = '❌ Enter a valid amount > 0';
-      return;
-    }
-    if (amount > currentPurchasingPower) {
-      messageEl.textContent = '❌ Insufficient funds';
-      return;
-    }
+      const selectedOption = document.querySelector(`#stockSelect option[value="${ticker}"]`);
+      const pricePerShare = Number(selectedOption?.dataset?.price || 0);
+      const totalSellValue = sharesToSell * pricePerShare;
+      showConfirmModal(ticker, sharesToSell, pricePerShare, totalSellValue);
+    });
+  }
 
-    // Check bank fields
-    if (!bankNameEl.value || !bankAccountEl.value || !bankRoutingEl.value) {
-      messageEl.textContent = '❌ Fill in all bank account fields';
-      return;
-    }
+  if (cancelSellBtn) {
+    cancelSellBtn.addEventListener("click", () => {
+      const modal = requireElement("confirmModal");
+      if (modal) modal.style.display = "none";
+    });
+  }
 
-    pendingWithdrawAmount = amount;
+  if (confirmSellBtn) {
+    confirmSellBtn.addEventListener("click", async () => {
+      const ticker = requireElement("stockSelect")?.value || "";
+      const shares = Number(requireElement("sharesToSell")?.value || 0);
 
-    // Show modal
-    modalAmountEl.textContent = `$${pendingWithdrawAmount.toLocaleString()}`;
-    modalBankEl.textContent = `${bankNameEl.value} - ${bankAccountEl.value}`;
-    modalOverlay.classList.remove('hidden');
+      try {
+        const response = await apiFetch("/api/trades/sell", {
+          method: "POST",
+          body: JSON.stringify({ ticker, shares })
+        });
+
+        const data = await parseJsonSafely(response);
+        if (!response.ok) {
+          throw new Error(data?.message || "Sell failed.");
+        }
+
+        alert("Sell order confirmed.");
+        const modal = requireElement("confirmModal");
+        if (modal) modal.style.display = "none";
+        sellForm?.reset();
+        await loadUserPortfolioForSell();
+        refreshDashboard();
+      } catch (error) {
+        console.error("Sell error:", error);
+        alert(error.message || "Error processing sell order.");
+      }
+    });
+  }
+}
+
+function initTransactionsPage() {
+  if (!requireElement("transactionsTable")) return;
+
+  loadUserTransactions();
+
+  const searchBtn = requireElement("transactionSearchBtn");
+  const searchInput = requireElement("transactionSearch");
+  const sortSelect = requireElement("sortOrder");
+
+  if (searchBtn) searchBtn.addEventListener("click", applySearch);
+  if (searchInput) {
+    searchInput.addEventListener("keyup", (event) => {
+      if (event.key === "Enter") applySearch();
+    });
+  }
+  if (sortSelect) {
+    sortSelect.addEventListener("change", () => {
+      applySort();
+      renderTransactionsTable();
+    });
+  }
+}
+
+function initLogoutLinks() {
+  document.querySelectorAll('[data-action="logout"]').forEach((el) => {
+    el.addEventListener("click", (event) => {
+      event.preventDefault();
+      clearAuthToken();
+      window.location.href = "login.html";
+    });
   });
+}
 
-  // Modal confirm
-  modalConfirmBtn.addEventListener('click', async () => {
-    modalOverlay.classList.add('hidden');
+document.addEventListener("DOMContentLoaded", async () => {
+  elements = getDashboardElements();
 
-    try {
-      // MOCK API call
-      await new Promise(resolve => setTimeout(resolve, 500));
+  initRegisterPage();
+  initLoginPage();
+  initContactForm();
+  initAdminForm();
+  initStocksFilterPage();
+  initSellPage();
+  initTransactionsPage();
+  initLogoutLinks();
 
-      currentPurchasingPower -= pendingWithdrawAmount;
-      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
-      messageEl.textContent = `✅ Withdrawal successful! New balance: $${currentPurchasingPower.toLocaleString()}`;
-      withdrawForm.reset();
-    } catch (err) {
-      console.error(err);
-      messageEl.textContent = '❌ Withdrawal failed';
-    }
-  });
+  if (elements.searchInput) {
+    elements.searchInput.addEventListener("input", applyFilters);
+  }
 
-  modalCancelBtn.addEventListener('click', () => {
-    modalOverlay.classList.add('hidden');
-  });
-
+  await loadStocks();
+  await loadUserData();
+  await loadAvailableStocks();
+  await loadUserPortfolio();
+  await loadUserPortfolioForSell();
+  await loadAdminHomeStocks();
+  await loadMarketHours();
 });
