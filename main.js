@@ -69,7 +69,7 @@ function renderTable(data = stocks) {
     const row = document.createElement("tr");
     row.addEventListener("click", () => showDetails(stock));
 
-    // Create all cells (same as before)
+    // Create all cells 
     const cells = [
       stock.symbol,
       stock.company,
@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const loginForm = document.getElementById('loginForm');
   if (!loginForm) return; // Skip if not on login page
 
-  // Login logic here (exact same code as before)
+  // Login logic 
   loginForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -393,8 +393,7 @@ async function loadStocks() {
 }
 
 // ==============================
-// Remove ALL elements definition and functions until line 176
-// REPLACE with this SINGLE block:
+
 document.addEventListener("DOMContentLoaded", async () => {
   // Define elements AFTER DOM loads
   window.elements = {
@@ -422,7 +421,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadStocks();
   updateStockCount();
 
-  // All your render functions here (they now work because elements exist)
+  // Render Functions
   renderPopularStocks();
   if (elements.tableBody) renderTable(stocks);
   if (elements.adminTableBody) renderAdminTable(stocks);
@@ -431,7 +430,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   // Event listeners
   if (elements.searchInput) elements.searchInput.addEventListener("input", applyFilters);
-  // ... rest unchanged
 });
 
 
@@ -450,7 +448,7 @@ const colorPalette = [
 
 async function loadUserData() {
   try {
-    // Fetch portfolio and cash from your backend API
+    // Fetch portfolio and cash from backend API
     const response = await fetch('/api/user/dashboard');
 
     if (!response.ok) {
@@ -458,16 +456,6 @@ async function loadUserData() {
     }
 
     const data = await response.json();
-
-    // Expected backend response format:
-    // {
-    //   cashBalance: 25000,
-    //   portfolio: [
-    //     { symbol: 'AAPL', value: 5000 },
-    //     { symbol: 'TSLA', value: 3000 },
-    //     { symbol: 'GOOGL', value: 2000 }
-    //   ]
-    // }
 
     portfolioData = data.portfolio || [];
     updateCashBalance(data.cashBalance || 0);
@@ -598,7 +586,7 @@ function populateStocksTable(stocksToShow = availableStocks) {
   }).join('');
 }
 
-// Sector filter (bonus feature using your existing controls)
+// Sector filter 
 document.getElementById('stockFilter')?.addEventListener('change', function () {
   const filter = this.value;
   const filteredStocks = filter === 'all'
@@ -614,7 +602,11 @@ let userPortfolio = [];
 
 async function loadUserPortfolio() {
   try {
-    const response = await fetch('/api/user/portfolio');
+    const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
+  headers: {
+    "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+  }
+});
 
     if (!response.ok) throw new Error('Failed to load portfolio');
 
@@ -796,7 +788,7 @@ document.getElementById('confirmSellBtn').addEventListener('click', async functi
 });
 
 // ==============================
-// Sell Stocks Page Function
+// Transactions Page Function
 // ==============================
 
 let userTransactions = [];
@@ -939,7 +931,7 @@ let marketHoursData = null;
 // ------------------------------
 async function loadAdminHomeStocks() {
   try {
-    // Adjust this endpoint to your backend
+    // Needs to be adjusted to backend api
     const response = await fetch('/api/stocks');
     if (!response.ok) throw new Error('Failed to load stocks');
 
@@ -1161,4 +1153,124 @@ document.addEventListener('DOMContentLoaded', () => {
 
   loadAdminHomeStocks();
   loadMarketHours();
+});
+
+// ==============================
+// USER DEPOSIT PAGE
+// ==============================
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ==============================
+  // ELEMENT REFERENCES
+  // ==============================
+  const depositForm      = document.getElementById('depositForm');
+  if (!depositForm) return;
+
+  const currentPowerEl   = document.getElementById('currentPower');
+  const depositAmountEl  = document.getElementById('depositAmount');
+  const paymentSelectEl  = document.getElementById('paymentSelect');
+  const savePaymentEl    = document.getElementById('savePayment');
+
+  const modalOverlay     = document.getElementById('modalOverlay');
+  const modalAmountEl    = document.getElementById('modalDepositAmount');
+  const modalConfirmBtn  = document.getElementById('modalConfirm');
+  const modalCancelBtn   = document.getElementById('modalCancel');
+
+  const messageEl        = document.getElementById('depositMessage');
+
+  let currentPurchasingPower = 0;
+  let pendingDepositAmount   = 0;
+
+  // ==============================
+  // LOAD CURRENT PURCHASING POWER
+  // ==============================
+  async function loadPurchasingPower() {
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      });
+
+      if (!response.ok) throw new Error('Failed to load portfolio');
+
+      const portfolio = await response.json();
+      currentPurchasingPower = portfolio.cash || 0;
+      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
+    } catch (err) {
+      console.error('Error loading purchasing power:', err);
+      currentPowerEl.textContent = 'Error';
+    }
+  }
+
+  loadPurchasingPower();
+
+  // ==============================
+  // HANDLE DEPOSIT FORM SUBMISSION
+  // ==============================
+  depositForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    messageEl.textContent = '';
+
+    const depositAmount = parseFloat(depositAmountEl.value);
+
+    if (isNaN(depositAmount) || depositAmount <= 0) {
+      messageEl.textContent = '❌ Please enter a valid amount greater than 0';
+      return;
+    }
+
+    pendingDepositAmount = depositAmount;
+    modalAmountEl.textContent = `$${pendingDepositAmount.toLocaleString()}`;
+
+    // Show modal only on valid submit
+    modalOverlay.classList.remove('hidden');
+  });
+
+  // ==============================
+  // HANDLE MODAL CONFIRM BUTTON
+  // ==============================
+  modalConfirmBtn.addEventListener('click', async () => {
+    // Hide modal
+    modalOverlay.classList.add('hidden');
+
+    try {
+      const selectedPayment = paymentSelectEl.value;
+      const savePayment = savePaymentEl.checked;
+
+      const response = await fetch(`${API_ORIGIN}/api/trades/deposit`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${localStorage.getItem('authToken')}`
+        },
+        body: JSON.stringify({
+          amount: pendingDepositAmount,
+          paymentMethod: selectedPayment,
+          savePayment
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        currentPurchasingPower += pendingDepositAmount;
+        currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
+        messageEl.textContent =
+          `✅ Deposit successful! Your new purchasing power is $${currentPurchasingPower.toLocaleString()}`;
+        depositForm.reset();
+      } else {
+        const errMsg = data.message || 'Deposit failed. Please try again.';
+        messageEl.textContent = `❌ ${errMsg}`;
+      }
+    } catch (err) {
+      console.error('Deposit error:', err);
+      messageEl.textContent = '❌ Network error. Please try again.';
+    }
+  });
+
+  // ==============================
+  // HANDLE MODAL CANCEL BUTTON
+  // ==============================
+  modalCancelBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('hidden');
+  });
+
 });
