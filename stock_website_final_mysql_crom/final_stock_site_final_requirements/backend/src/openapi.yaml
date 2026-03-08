@@ -1,0 +1,208 @@
+openapi: 3.0.3
+info:
+  title: Stock Trading System API
+  version: 1.0.0
+servers:
+  - url: http://localhost:4000
+tags:
+  - name: Auth
+  - name: Stocks
+  - name: Trades
+  - name: Admin
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+paths:
+  /health:
+    get:
+      summary: Health check
+      responses:
+        "200":
+          description: OK
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, fullName]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                fullName: { type: string }
+      responses:
+        "201": { description: Created }
+        "409": { description: Email already in use }
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string }
+      responses:
+        "200": { description: OK }
+        "401": { description: Invalid credentials }
+  /api/stocks:
+    get:
+      tags: [Stocks]
+      summary: List stocks
+      responses:
+        "200": { description: OK }
+  /api/stocks/{ticker}:
+    get:
+      tags: [Stocks]
+      summary: Get stock by ticker
+      parameters:
+        - in: path
+          name: ticker
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+        "404": { description: Not found }
+  /api/stocks/{ticker}/quote:
+    get:
+      tags: [Stocks]
+      summary: Get generated quote (updates price when market open)
+      parameters:
+        - in: path
+          name: ticker
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+        "404": { description: Unknown ticker }
+  /api/stocks/{ticker}/history:
+    get:
+      tags: [Stocks]
+      summary: Get price history points for charting
+      parameters:
+        - in: path
+          name: ticker
+          required: true
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, default: 120 }
+      responses:
+        "200": { description: OK }
+  /api/trades/portfolio:
+    get:
+      tags: [Trades]
+      security: [{ BearerAuth: [] }]
+      summary: Get current user portfolio + cash balance
+      responses:
+        "200": { description: OK }
+        "401": { description: Unauthorized }
+  /api/trades/transactions:
+    get:
+      tags: [Trades]
+      security: [{ BearerAuth: [] }]
+      summary: List recent transactions
+      parameters:
+        - in: query
+          name: limit
+          schema: { type: integer, default: 50 }
+      responses:
+        "200": { description: OK }
+  /api/trades/buy:
+    post:
+      tags: [Trades]
+      security: [{ BearerAuth: [] }]
+      summary: Buy shares at generated quote price
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticker, shares]
+              properties:
+                ticker: { type: string }
+                shares: { type: number }
+      responses:
+        "201": { description: Created }
+        "400": { description: Insufficient cash / validation }
+  /api/trades/sell:
+    post:
+      tags: [Trades]
+      security: [{ BearerAuth: [] }]
+      summary: Sell shares at generated quote price
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [ticker, shares]
+              properties:
+                ticker: { type: string }
+                shares: { type: number }
+      responses:
+        "201": { description: Created }
+        "400": { description: Insufficient shares / validation }
+  /api/admin/stocks:
+    post:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Admin create stock
+      responses:
+        "201": { description: Created }
+  /api/admin/stocks/{ticker}:
+    patch:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Admin update stock
+      parameters:
+        - in: path
+          name: ticker
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+    delete:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Admin delete stock
+      parameters:
+        - in: path
+          name: ticker
+          required: true
+          schema: { type: string }
+      responses:
+        "200": { description: OK }
+  /api/admin/market/status:
+    get:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Market open/closed status (UTC model)
+      responses:
+        "200": { description: OK }
+  /api/admin/market/hours:
+    get:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Get market hours
+      responses:
+        "200": { description: OK }
+    post:
+      tags: [Admin]
+      security: [{ BearerAuth: [] }]
+      summary: Upsert market hours
+      responses:
+        "201": { description: Created }

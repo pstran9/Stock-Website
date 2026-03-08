@@ -1,0 +1,12 @@
+1) Open a terminal in the backend folder
+2) Run: docker compose up -d
+3) Run: npm install
+4) Run: npm run db:init
+5) Run: npm run db:seed
+6) Run: npm run dev
+7) Open the frontend with VS Code Live Server
+8) If the frontend cannot reach the backend, open browser console and run:
+   localStorage.setItem('apiOrigin', 'http://localhost:4000')
+
+Backend URL: http://localhost:4000
+Swagger Docs: http://localhost:4000/api/docs
