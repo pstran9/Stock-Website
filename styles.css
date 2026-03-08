@@ -660,6 +660,10 @@ form button[type="submit"] {
   z-index: 1000;
 }
 
+.modal-overlay.hidden {
+  display: none !important;
+}
+
 .modal-content {
   background: white;
   padding: 32px;
@@ -851,4 +855,15 @@ form button[type="submit"] {
   justify-content: space-between;
   align-items: center;
   margin: 24px 0 12px 0;
+}
+
+
+/* Withdrawal Form Section */
+
+/* Make all input fields in the withdraw form full width */
+#withdrawForm input {
+  width: 100%;
+  padding: 10px;
+  font-size: 1rem;
+  box-sizing: border-box;
 }

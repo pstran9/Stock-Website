@@ -18,14 +18,14 @@ async function apiFetch(path, options = {}) {
   };
 
 
-//Auth request run automatically
-const token = localStorage.getItem("authToken");
-if (token && !headers.Authorization) {
-  headers.Authorization = `Bearer ${token}`;
-}
+  //Auth request run automatically
+  const token = localStorage.getItem("authToken");
+  if (token && !headers.Authorization) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
-const res = await fetch(apiUrl(path), {...options, headers});
-return res;
+  const res = await fetch(apiUrl(path), { ...options, headers });
+  return res;
 
 }
 
@@ -603,10 +603,10 @@ let userPortfolio = [];
 async function loadUserPortfolio() {
   try {
     const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
-  headers: {
-    "Authorization": `Bearer ${localStorage.getItem("authToken")}`
-  }
-});
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("authToken")}`
+      }
+    });
 
     if (!response.ok) throw new Error('Failed to load portfolio');
 
@@ -1155,35 +1155,35 @@ document.addEventListener('DOMContentLoaded', () => {
   loadMarketHours();
 });
 
-// ==============================
-// USER DEPOSIT PAGE
-// ==============================
+// -----------------------------
+// USER DEPOSIT PAGE FUNCTIONS
+// -----------------------------
+
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ==============================
-  // ELEMENT REFERENCES
-  // ==============================
-  const depositForm      = document.getElementById('depositForm');
+  const depositForm = document.getElementById('depositForm');
   if (!depositForm) return;
 
-  const currentPowerEl   = document.getElementById('currentPower');
-  const depositAmountEl  = document.getElementById('depositAmount');
-  const paymentSelectEl  = document.getElementById('paymentSelect');
-  const savePaymentEl    = document.getElementById('savePayment');
+  const currentPowerEl = document.getElementById('currentPower');
+  const depositAmountEl = document.getElementById('depositAmount');
+  const paymentSelectEl = document.getElementById('paymentSelect');
+  const savePaymentEl = document.getElementById('savePayment');
 
-  const modalOverlay     = document.getElementById('modalOverlay');
-  const modalAmountEl    = document.getElementById('modalDepositAmount');
-  const modalConfirmBtn  = document.getElementById('modalConfirm');
-  const modalCancelBtn   = document.getElementById('modalCancel');
+  const newPaymentFields = document.getElementById('newPaymentFields');
 
-  const messageEl        = document.getElementById('depositMessage');
+  const modalOverlay = document.getElementById('modalOverlay');
+  const modalAmountEl = document.getElementById('modalDepositAmount');
+  const modalConfirmBtn = document.getElementById('modalConfirm');
+  const modalCancelBtn = document.getElementById('modalCancel');
+
+  const messageEl = document.getElementById('depositMessage');
 
   let currentPurchasingPower = 0;
-  let pendingDepositAmount   = 0;
+  let pendingDepositAmount = 0;
 
-  // ==============================
-  // LOAD CURRENT PURCHASING POWER
-  // ==============================
+  // -----------------------------
+  // Fetch user's purchasing power
+  // -----------------------------
   async function loadPurchasingPower() {
     try {
       const response = await fetch(`${API_ORIGIN}/api/trades/portfolio`, {
@@ -1201,11 +1201,52 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  loadPurchasingPower();
+  // -----------------------------
+  // Fetch saved payment methods
+  // -----------------------------
+  async function loadSavedPaymentMethods() {
+    try {
+      const response = await fetch(`${API_ORIGIN}/api/users/payment-methods`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` }
+      });
 
-  // ==============================
-  // HANDLE DEPOSIT FORM SUBMISSION
-  // ==============================
+      if (!response.ok) throw new Error('Failed to load payment methods');
+
+      const methods = await response.json();
+
+      // Reset options
+      paymentSelectEl.innerHTML = '<option value="">Use new payment method</option>';
+
+      methods.forEach(method => {
+        const opt = document.createElement('option');
+        opt.value = method.id;
+        opt.textContent = method.label;
+        paymentSelectEl.appendChild(opt);
+      });
+
+      // Show/hide new payment fields
+      toggleNewPaymentFields();
+    } catch (err) {
+      console.error('Error loading payment methods:', err);
+    }
+  }
+
+  // -----------------------------
+  // Show/hide new card fields
+  // -----------------------------
+  function toggleNewPaymentFields() {
+    if (paymentSelectEl.value === '') {
+      newPaymentFields.style.display = 'block';
+    } else {
+      newPaymentFields.style.display = 'none';
+    }
+  }
+
+  paymentSelectEl.addEventListener('change', toggleNewPaymentFields);
+
+  // -----------------------------
+  // Handle deposit submission
+  // -----------------------------
   depositForm.addEventListener('submit', (e) => {
     e.preventDefault();
     messageEl.textContent = '';
@@ -1219,21 +1260,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     pendingDepositAmount = depositAmount;
     modalAmountEl.textContent = `$${pendingDepositAmount.toLocaleString()}`;
-
-    // Show modal only on valid submit
     modalOverlay.classList.remove('hidden');
   });
 
-  // ==============================
-  // HANDLE MODAL CONFIRM BUTTON
-  // ==============================
+  // -----------------------------
+  // Modal Confirm
+  // -----------------------------
   modalConfirmBtn.addEventListener('click', async () => {
-    // Hide modal
     modalOverlay.classList.add('hidden');
 
     try {
       const selectedPayment = paymentSelectEl.value;
       const savePayment = savePaymentEl.checked;
+
+      const bodyData = {
+        amount: pendingDepositAmount,
+        paymentMethod: selectedPayment,
+        savePayment
+      };
+
+      // Only include new card info if "Use new payment method" selected
+      if (selectedPayment === '') {
+        bodyData.cardName = document.getElementById('cardName').value;
+        bodyData.cardNumber = document.getElementById('cardNumber').value;
+        bodyData.cardExp = document.getElementById('cardExp').value;
+        bodyData.cardCVV = document.getElementById('cardCVV').value;
+      }
 
       const response = await fetch(`${API_ORIGIN}/api/trades/deposit`, {
         method: 'POST',
@@ -1241,11 +1293,7 @@ document.addEventListener('DOMContentLoaded', () => {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${localStorage.getItem('authToken')}`
         },
-        body: JSON.stringify({
-          amount: pendingDepositAmount,
-          paymentMethod: selectedPayment,
-          savePayment
-        })
+        body: JSON.stringify(bodyData)
       });
 
       const data = await response.json();
@@ -1256,6 +1304,8 @@ document.addEventListener('DOMContentLoaded', () => {
         messageEl.textContent =
           `✅ Deposit successful! Your new purchasing power is $${currentPurchasingPower.toLocaleString()}`;
         depositForm.reset();
+        toggleNewPaymentFields();
+        loadSavedPaymentMethods(); // reload in case a new card was saved
       } else {
         const errMsg = data.message || 'Deposit failed. Please try again.';
         messageEl.textContent = `❌ ${errMsg}`;
@@ -1266,9 +1316,105 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // ==============================
-  // HANDLE MODAL CANCEL BUTTON
-  // ==============================
+  // -----------------------------
+  // Modal Cancel
+  // -----------------------------
+  modalCancelBtn.addEventListener('click', () => {
+    modalOverlay.classList.add('hidden');
+  });
+
+  // -----------------------------
+  // Initial load
+  // -----------------------------
+  loadPurchasingPower();
+  loadSavedPaymentMethods();
+
+});
+
+// -----------------------------
+// Withdrawal Page Functions
+// -----------------------------
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const withdrawForm      = document.getElementById('withdrawForm');
+  const currentPowerEl    = document.getElementById('currentPower');
+  const withdrawAmountEl  = document.getElementById('withdrawAmount');
+  const bankNameEl        = document.getElementById('bankName');
+  const bankAccountEl     = document.getElementById('bankAccount');
+  const bankRoutingEl     = document.getElementById('bankRouting');
+  const messageEl         = document.getElementById('withdrawMessage');
+
+  const modalOverlay      = document.getElementById('modalOverlay');
+  const modalAmountEl     = document.getElementById('modalWithdrawAmount');
+  const modalBankEl       = document.getElementById('modalBankAccount');
+  const modalConfirmBtn   = document.getElementById('modalConfirm');
+  const modalCancelBtn    = document.getElementById('modalCancel');
+
+  let currentPurchasingPower = 0;
+  let pendingWithdrawAmount = 0;
+
+  // MOCK: Load current purchasing power
+  async function loadPurchasingPower() {
+    try {
+      const portfolio = { cash: 5000 }; // Mocked for development
+      currentPurchasingPower = portfolio.cash;
+      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
+    } catch (err) {
+      console.error(err);
+      currentPowerEl.textContent = 'Error';
+    }
+  }
+
+  loadPurchasingPower();
+
+  // Handle form submission
+  withdrawForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    messageEl.textContent = '';
+
+    const amount = parseFloat(withdrawAmountEl.value);
+    if (isNaN(amount) || amount <= 0) {
+      messageEl.textContent = '❌ Enter a valid amount > 0';
+      return;
+    }
+    if (amount > currentPurchasingPower) {
+      messageEl.textContent = '❌ Insufficient funds';
+      return;
+    }
+
+    // Check bank fields
+    if (!bankNameEl.value || !bankAccountEl.value || !bankRoutingEl.value) {
+      messageEl.textContent = '❌ Fill in all bank account fields';
+      return;
+    }
+
+    pendingWithdrawAmount = amount;
+
+    // Show modal
+    modalAmountEl.textContent = `$${pendingWithdrawAmount.toLocaleString()}`;
+    modalBankEl.textContent = `${bankNameEl.value} - ${bankAccountEl.value}`;
+    modalOverlay.classList.remove('hidden');
+  });
+
+  // Modal confirm
+  modalConfirmBtn.addEventListener('click', async () => {
+    modalOverlay.classList.add('hidden');
+
+    try {
+      // MOCK API call
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      currentPurchasingPower -= pendingWithdrawAmount;
+      currentPowerEl.textContent = `$${currentPurchasingPower.toLocaleString()}`;
+      messageEl.textContent = `✅ Withdrawal successful! New balance: $${currentPurchasingPower.toLocaleString()}`;
+      withdrawForm.reset();
+    } catch (err) {
+      console.error(err);
+      messageEl.textContent = '❌ Withdrawal failed';
+    }
+  });
+
   modalCancelBtn.addEventListener('click', () => {
     modalOverlay.classList.add('hidden');
   });
