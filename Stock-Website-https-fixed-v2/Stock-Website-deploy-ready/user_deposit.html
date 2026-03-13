@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Deposit Funds</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header class="top-header">
+  <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+  <div class="top-actions">
+    <a href="create-account.html" class="btn create-btn">Create Account</a>
+    <a href="login.html" class="btn login-btn">Login</a>
+  </div>
+</header>
+
+<nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="user_home.html">Dashboard</a></li>
+      <li><a href="user_portfolio.html">Portfolio</a></li>
+      <li><a href="user_deposit.html">Deposit Funds</a></li>
+      <li><a href="user_withdraw.html">Withdraw Funds</a></li>
+      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="user_transactions.html">Transactions</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+<main class="page-wrapper">
+
+  <div class="page-header">
+    <h1>Deposit Funds</h1>
+    <p>Add money to your trading account</p>
+  </div>
+
+  <section class="table-section">
+
+    <div class="purchasing-power-display">
+      <h3>Current Purchasing Power</h3>
+      <p id="currentPower" class="power-amount">$0.00</p>
+    </div>
+
+    <form id="depositForm" class="form-grid">
+
+      <!-- Deposit Amount -->
+      <div class="control-group">
+        <label>Deposit Amount</label>
+        <input type="number" id="depositAmount" min="1" placeholder="Enter amount">
+        <div id="depositError" class="error-message"></div>
+      </div>
+
+      <!-- Saved Payment Method -->
+      <div class="control-group">
+        <label>Saved Payment Method</label>
+        <select id="paymentSelect">
+          <option value="">Use new payment method</option>
+        </select>
+      </div>
+
+      <!-- New Payment Fields -->
+      <div id="newPaymentFields">
+        <div class="control-group">
+          <label>Name on Card</label>
+          <input type="text" id="cardName">
+        </div>
+        <div class="control-group">
+          <label>Card Number</label>
+          <input type="text" id="cardNumber" placeholder="xxxx xxxx xxxx xxxx">
+        </div>
+        <div class="control-group">
+          <label>Expiration Date</label>
+          <input type="month" id="cardExp">
+        </div>
+        <div class="control-group">
+          <label>CVV</label>
+          <input type="password" id="cardCVV" maxlength="4">
+        </div>
+        <div class="control-group">
+          <label>
+            <input type="checkbox" id="savePayment">
+            Save payment method for future deposits
+          </label>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <button type="submit" class="btn-buy">Deposit Funds</button>
+      </div>
+
+    </form>
+
+    <div id="depositMessage"></div>
+
+  </section>
+
+</main>
+
+<!-- CONFIRM MODAL -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Confirm Deposit</h2>
+    <div class="confirm-details">
+      <div>
+        <span class="label">Amount</span>
+        <span id="modalDepositAmount" class="value"></span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="modalConfirm" class="btn login-btn">Confirm</button>
+      <button id="modalCancel" class="btn withdraw-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+
+</body>
+</html>

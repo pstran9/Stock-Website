@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin – Stock Management</title>
+    <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+    <!-- Header -->
+    <header class="top-header">
+        <h1 class="site-title">Add Stocks</h1>
+
+        <div class="top-actions">
+            <a href="create-account.html" class="btn create-btn">Create Account</a>
+            <a href="login.html" class="btn login-btn">Login</a>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="admin_home.html">Dashboard</a></li>
+            <li><a href="admin_edit_stocks.html">Edit Stocks</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="market_hours.html">Configure Market Hours</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main content wrapper -->
+    <main class="page-wrapper">
+        <!-- Page header -->
+        <section class="page-header">
+            <h1>Stock Management</h1>
+            <p>Add, edit, and manage stocks that appear on the Market page.</p>
+        </section>
+
+        <!-- Add Stock Form -->
+        <section class="admin-section">
+            <h2>Add New Stock</h2>
+            <form id="addStockForm">
+                <div class="form-grid">
+                    <div class="control-group">
+                        <label for="symbolInput">Symbol *</label>
+                        <input id="symbolInput" type="text" required placeholder="AAPL" maxlength="10" />
+                    </div>
+                    <div class="control-group">
+                        <label for="companyInput">Company Name *</label>
+                        <input id="companyInput" type="text" required placeholder="Apple Inc." />
+                    </div>
+                    <div class="control-group">
+                        <label for="sectorInput">Sector *</label>
+                        <select id="sectorInput" required>
+                            <option value="">Choose sector</option>
+                            <option value="Technology">Technology</option>
+                            <option value="Finance">Finance</option>
+                            <option value="Energy">Energy</option>
+                            <option value="Consumer">Consumer</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Industrial">Industrial</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="priceInput">Price ($) *</label>
+                        <input id="priceInput" type="number" step="0.01" min="0" required />
+                    </div>
+                    <div class="control-group">
+                        <label for="changeInput">Change ($) *</label>
+                        <input id="changeInput" type="number" step="0.01" required />
+                    </div>
+                    <div class="control-group">
+                        <label for="percentInput">% Change *</label>
+                        <input id="percentInput" type="number" step="0.01" required />
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-buy">Add Stock</button>
+            </form>
+        </section>
+
+        <!-- Current Stocks Table -->
+        <section class="admin-section">
+            <h2>Current Stocks (<span id="stockCount">0</span>)</h2>
+            <div class="table-controls">
+                <input type="text" id="adminSearch" placeholder="Search stocks..." />
+                <button id="clearAllBtn" class="btn btn-sell">Clear All Stocks</button>
+            </div>
+            <div class="table-wrapper">
+                <table id="adminStockTable">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Company</th>
+                            <th>Sector</th>
+                            <th>Price</th>
+                            <th>Change</th>
+                            <th>% Change</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminTableBody">
+                        <!-- Rows populated by main.js -->
+                    </tbody>
+                </table>
+            </div>
+            <p class="note">Note: Data persists only during this browser session. Add a backend later for permanent storage.</p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>&copy; 2026 MyStockSite.</p>
+    </footer>
+
+    <!-- Call main.js -->
+    <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

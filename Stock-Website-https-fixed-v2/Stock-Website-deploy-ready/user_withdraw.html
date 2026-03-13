@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Withdraw Funds</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+<header class="top-header">
+  <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+</header>
+
+<main class="page-wrapper">
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="user_home.html">Dashboard</a></li>
+      <li><a href="user_portfolio.html">Portfolio</a></li>
+      <li><a href="user_deposit.html">Deposit Funds</a></li>
+      <li><a href="user_withdraw.html">Withdraw Funds</a></li>
+      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="user_transactions.html">Transactions</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+  <div class="page-header">
+    <h1>Withdraw Funds</h1>
+    <p>Withdraw money to your bank account</p>
+  </div>
+
+  <section class="table-section">
+
+    <div class="purchasing-power-display">
+      <h3>Current Purchasing Power</h3>
+      <p id="currentPower" class="power-amount">$0.00</p>
+    </div>
+
+    <form id="withdrawForm" class="form-grid">
+
+      <!-- Withdrawal Amount -->
+      <div class="control-group">
+        <label>Withdrawal Amount</label>
+        <input type="number" id="withdrawAmount" min="1" placeholder="Enter amount">
+        <div id="withdrawError" class="error-message"></div>
+      </div>
+
+      <!-- Bank Account Fields -->
+       <h3>Enter Bank Account Information:</h3>
+      <div class="control-group">
+        <label>Name</label>
+        <input type="text" id="bankName" placeholder="Full Name">
+      </div>
+      <div class="control-group">
+        <label>Account Number</label>
+        <input type="text" id="bankAccount" placeholder="1234567890">
+      </div>
+      <div class="control-group">
+        <label>Routing Number</label>
+        <input type="text" id="bankRouting" placeholder="012345678">
+      </div>
+
+      <div class="control-group">
+        <button type="submit" class="btn-buy">Withdraw Funds</button>
+      </div>
+
+    </form>
+
+    <div id="withdrawMessage"></div>
+
+  </section>
+
+</main>
+
+<!-- CONFIRM MODAL -->
+<div id="modalOverlay" class="modal-overlay hidden">
+  <div class="modal-content">
+    <h2>Confirm Withdrawal</h2>
+    <div class="confirm-details">
+      <div>
+        <span class="label">Amount</span>
+        <span id="modalWithdrawAmount" class="value"></span>
+      </div>
+      <div>
+        <span class="label">Bank Account</span>
+        <span id="modalBankAccount" class="value"></span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button id="modalConfirm" class="btn login-btn">Confirm</button>
+      <button id="modalCancel" class="btn withdraw-btn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

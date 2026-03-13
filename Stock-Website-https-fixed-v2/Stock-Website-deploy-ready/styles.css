@@ -1,0 +1,854 @@
+/* ===== GENERAL PAGE LAYOUT ===== */
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+  margin: 0;
+}
+
+/* ===== TOP HEADER: TITLE + TOP-RIGHT BUTTONS ===== */
+.top-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  position: relative;
+  height: 60px; 
+}
+
+.site-title {
+  margin: 0;
+  font-size: 24px;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%; 
+}
+
+.top-actions {
+  display: flex;
+  gap: 10px;
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.top-actions .btn {
+  padding: 6px 12px;
+  font-size: 14px;
+}
+
+/* ===== MAIN CONTENT SPACING ===== */
+main {
+  padding-top: 20px;
+}
+
+/* ===== FORM STYLING ===== */
+form {
+  display: inline-block;
+  text-align: left;
+  margin-top: 20px;
+}
+
+form div {
+  margin-bottom: 10px;
+}
+
+label {
+  display: block;
+  margin-bottom: 4px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 250px;
+  padding: 8px;
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* ===== BUTTON STYLING ===== */
+button,
+.btn {
+  padding: 10px 20px;
+  margin: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  border: none;
+}
+
+.create-btn {
+  background-color: #4CAF50;
+  color: white;
+}
+
+.login-btn {
+  background-color: #008CBA;
+  color: white;
+}
+
+form button[type="submit"] {
+  background-color: #008CBA;
+  color: white;
+  margin-top: 15px;
+}
+
+/* ===== NAVIGATION BAR ===== */
+.navbar {
+  background-color: #333;
+  overflow: hidden;
+}
+
+.navbar ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.navbar li {
+  padding: 14px 20px;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.navbar a:hover {
+  background-color: #575757;
+  border-radius: 4px;
+}
+
+/* ===== POPULAR STOCKS (HOME PAGE) ===== */
+.stock-section {
+  margin: 20px auto;
+  max-width: 600px;
+  background-color: #ffffff;
+  border-radius: 6px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  padding: 16px 20px;
+}
+
+.stock-section h2 {
+  margin-top: 0;
+  text-align: center;
+}
+
+#stock-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#stock-list li {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+#stock-list li:last-child {
+  border-bottom: none;
+}
+
+.stock-symbol {
+  font-weight: bold;
+}
+
+.stock-price {
+  color: #333;
+}
+
+/* ===== CONTACT FORM ===== */
+#contact-form-section {
+  max-width: 500px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+#contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+#contact-form label {
+  font-weight: 600;
+}
+
+#contact-form input[type="text"],
+#contact-form input[type="email"],
+#contact-form textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font: 1rem Arial, sans-serif;
+}
+
+#contact-form button[type="submit"] {
+  margin-top: 10px;
+  align-self: center;
+  padding: 8px 24px;
+  border: none;
+  border-radius: 4px;
+  background-color: #333;
+  color: white;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+#contact-form button[type="submit"]:hover {
+  background-color: #555;
+}
+
+/* ===== ADMIN PANEL STYLES ===== */
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.admin-section {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.admin-section h2 {
+  margin-bottom: 16px;
+  color: #1f2937;
+}
+
+.table-controls {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.table-controls input {
+  flex: 1;
+  min-width: 200px;
+}
+
+.note {
+  color: #6b7280;
+  font-size: 0.85rem;
+  margin-top: 12px;
+}
+
+/* ===== ADMIN TABLE ===== */
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+}
+
+#adminStockTable {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+#adminStockTable th,
+#adminStockTable td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#adminStockTable th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+}
+
+#adminStockTable tbody tr:hover {
+  background-color: #f9fafb;
+}
+
+/* ===== ADMIN ACTION BUTTONS ===== */
+.btn-edit {
+  background-color: #3b82f6;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  margin-right: 4px;
+}
+
+.btn-edit:hover {
+  background-color: #2563eb;
+}
+
+.btn-delete {
+  background-color: #ef4444;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+}
+
+.btn-delete:hover {
+  background-color: #dc2626;
+}
+
+#stockCount {
+  color: #10b981;
+  font-weight: bold;
+}
+
+/* ===== MARKET TABLE ===== */
+.table-section {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.table-wrapper {
+  overflow-x: auto;
+  border-radius: 6px;
+  border: 1px solid #e5e7eb;
+  margin-top: 16px;
+}
+
+#stockTable {
+  width: 100%;
+  border-collapse: collapse;
+  background-color: #ffffff;
+}
+
+#stockTable th,
+#stockTable td {
+  padding: 12px;
+  text-align: left;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+#stockTable th {
+  background-color: #f3f4f6;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+#stockTable tbody tr {
+  background-color: #ffffff;
+}
+
+#stockTable tbody tr:nth-child(even) {
+  background-color: #f9fafb;
+}
+
+#stockTable tbody tr:hover {
+  background-color: #f1f4ff;
+}
+
+/* ===== MARKET CONTROLS ===== */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0 24px;
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.control-group {
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+}
+
+.control-group label {
+  font-size: 0.85rem;
+  margin-bottom: 4px;
+  color: #555;
+}
+
+.control-group input,
+.control-group select {
+  padding: 8px 10px;
+  border-radius: 4px;
+  border: 1px solid #ccd1e4;
+  font-size: 0.9rem;
+}
+
+.control-group input:focus,
+.control-group select:focus {
+  outline: none;
+  border-color: #00c48c;
+  box-shadow: 0 0 0 3px rgba(0, 196, 140, 0.1);
+}
+
+/* ===== MARKET DETAILS PANEL ===== */
+.details-section {
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.details-card {
+  margin-top: 16px;
+  padding: 20px;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+}
+
+.hidden {
+  display: none;
+}
+
+/* ===== PAGE LAYOUT HELPERS ===== */
+.page-wrapper {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.page-header {
+  text-align: center;
+  margin-bottom: 32px;
+}
+
+.page-header h1 {
+  font-size: 2.5rem;
+  color: #1f2937;
+  margin-bottom: 8px;
+}
+
+.page-header p {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+/* ===== UTILITY CLASSES ===== */
+.positive {
+  color: #059669;
+  font-weight: bold;
+}
+
+.negative {
+  color: #dc2626;
+  font-weight: bold;
+}
+
+.neutral {
+  color: #4b5563;
+}
+
+.actions-cell {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-buy {
+  background-color: #10b981;
+  color: #ffffff;
+}
+
+.btn-buy:hover {
+  background-color: #059669;
+}
+
+.btn-sell {
+  background-color: #ef4444;
+  color: #ffffff;
+}
+
+.btn-sell:hover {
+  background-color: #dc2626;
+}
+
+/* ===== USER HOME PAGE STYLES ===== */
+
+/* Pie chart container */
+.pie-chart-container {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+#portfolioPie {
+  border-radius: 50%;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.pie-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-weight: 500;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border-radius: 3px;
+  margin-right: 8px;
+}
+
+/* Purchasing power display */
+.purchasing-power-display {
+  text-align: center;
+  padding: 24px;
+  background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+  border-radius: 12px;
+  border: 2px solid #0ea5e9;
+}
+
+.power-amount {
+  font-size: 3rem;
+  font-weight: bold;
+  color: #0369a1;
+  margin: 0;
+}
+
+.power-note {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin: 8px 0 0;
+}
+
+/* CENTERED Fund buttons */
+.funds-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.withdraw-btn {
+  background-color: #ef4444 !important;
+  color: white !important;
+}
+
+.withdraw-btn:hover {
+  background-color: #dc2626 !important;
+}
+
+.table-controls a, .funds-buttons-container a {
+  padding: 12px 24px;
+  font-size: 1rem;
+  text-decoration: none;
+  border-radius: 6px;
+  transition: all 0.2s;
+}
+
+.table-controls a:hover, .funds-buttons-container a:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+/* ===== PORTFOLIO PAGE STYLES ===== */
+
+.portfolio-controls-left,
+.portfolio-controls-right {
+  flex: 1;
+  min-width: 250px;
+}
+
+.portfolio-controls-right {
+  text-align: right;
+}
+
+.portfolio-action-buttons {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.portfolio-action-buttons .btn {
+  padding: 10px 20px;
+  font-size: 0.9rem;
+  white-space: nowrap; 
+  box-sizing: border-box;
+}
+
+/* Ensure controls layout works */
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 16px 0 24px;
+  padding: 16px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  align-items: flex-end;
+}
+
+/* ===== SELL STOCKS PAGE STYLES ===== */
+
+/* Sell Stocks Page - Fixed Button Alignment */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 20px;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+#sellForm input[type="number"],
+#sellForm select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccd1e4;
+  border-radius: 4px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+
+#sellForm input[type="number"]:focus,
+#sellForm select:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+.error-message {
+  margin-top: 4px;
+  font-size: 0.85rem;
+}
+
+/* Button aligns perfectly with form fields */
+#sellForm .control-group:last-child {
+  margin-top: 10px;
+}
+
+#sellForm button[type="submit"] {
+  width: 100%;
+  padding: 12px 20px;
+  height: 48px; /* Matches input height + padding */
+  box-sizing: border-box;
+  border: none;
+}
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 32px;
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.confirm-details {
+  background: #f8fafc;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  border-left: 4px solid #10b981;
+}
+
+.confirm-details div {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  font-size: 1.1rem;
+}
+
+.confirm-details .label {
+  font-weight: 500;
+  color: #64748b;
+}
+
+.confirm-details .value {
+  font-weight: bold;
+  color: #1f2937;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 24px;
+}
+
+.modal-actions .btn {
+  padding: 12px 24px;
+  font-size: 1rem;
+  flex: 1;
+  max-width: 140px;
+}
+
+/* ===== USER TRANSACTIONS PAGE STYLES ===== */
+
+/* The container already is flex via .controls */
+.transactions-controls {
+  align-items: flex-end; 
+}
+
+/* Push sort group to far right */
+.sort-control-group {
+  margin-left: auto;
+}
+
+/* Search input + button on one line */
+.transaction-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.transaction-search-row input[type="text"] {
+  flex: 1;
+}
+
+/* In styles.css */
+.transaction-search-row input[type="text"] {
+  padding: 8px 10px;          
+  font-size: 14px;
+  box-sizing: border-box;
+}
+
+/* Make the search button match input height */
+.transaction-search-row button {
+  padding: 8px 16px;          
+  font-size: 14px;            
+  margin: 0;                  
+  height: auto;               
+}
+
+/* ===== ADMIN HOME PAGE ===== */
+
+/* Table header row with Edit button to the right */
+.table-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.table-header-row h2 {
+  margin: 0;
+}
+
+/* Optional smaller edit button style */
+.edit-table-btn {
+  padding: 8px 16px;
+  font-size: 0.9rem;
+}
+
+/* Calendar + hours layout side by side */
+.admin-hours-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  margin-top: 32px;
+}
+
+/* Card-style panels reusing your admin aesthetics */
+.admin-card {
+  flex: 1;
+  min-width: 260px;
+  background-color: #ffffff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+}
+
+/* Calendar grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 0.8rem;
+}
+
+.calendar-grid .day-label {
+  font-weight: 600;
+  text-align: center;
+  color: #4b5563;
+}
+
+.calendar-grid .day-cell {
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+.calendar-grid .day-cell.closed {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.calendar-grid .day-cell.short {
+  background-color: #fef9c3;
+  color: #92400e;
+}
+
+/* Market hours section */
+.market-hours-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.market-hours-table,
+.holiday-hours-list {
+  margin-top: 8px;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9rem;
+}
+
+.hours-row:last-child {
+  border-bottom: none;
+}
+
+.holiday-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 24px 0 12px 0;
+}

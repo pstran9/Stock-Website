@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Manage Market Hours</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="manage_hours.css">
+</head>
+
+<body>
+
+    <header class="top-header">
+        <h1 class="site-title">Manage Market Hours</h1>
+        <div class="top-actions">
+            <a href="admin_home.html" class="btn login-btn">Admin Home</a>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="admin_home.html">Dashboard</a></li>
+            <li><a href="admin_edit_stocks.html">Edit Stocks</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="admin_edit_hours.html">Configure Market Hours</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-wrapper">
+
+        <h2>Weekly Market Hours</h2>
+
+        <table id="hoursTable">
+            <thead>
+                <tr>
+                    <th>Day</th>
+                    <th>Opening Hours</th>
+                    <th>Closing Hours</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                <tr>
+                    <td>Monday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Tuesday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Wednesday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Thursday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Friday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Saturday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+                <tr>
+                    <td>Sunday</td>
+                    <td><select class="open"></select></td>
+                    <td><select class="close"></select></td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <button class="btn" onclick="confirmWeekly()">Save Weekly Hours</button>
+
+
+        <section class="holiday-section">
+
+            <h2>Holiday Hours</h2>
+
+            <label>Date:</label>
+            <input type="date" id="holidayDate">
+
+            <label>Holiday Name:</label>
+            <input type="text" id="holidayName">
+
+            <br>
+
+            <label>Closed All Day?</label>
+            <select id="closedAllDay">
+                <option value="no">No</option>
+                <option value="yes">Yes</option>
+            </select>
+
+            <br>
+
+            <label>Opening Hours:</label>
+            <select id="holidayOpen"></select>
+
+            <label>Closing Hours:</label>
+            <select id="holidayClose"></select>
+
+            <br><br>
+
+            <button class="btn" onclick="confirmHoliday()">Add Holiday</button>
+
+        </section>
+
+
+        <h3>Existing Holiday Hours</h3>
+        <ul id="holidayList"></ul>
+
+    </main>
+
+
+    <div class="popup" id="confirmPopup">
+        <div class="popup-box">
+
+            <h3>Confirm Submission</h3>
+            <p id="popupText"></p>
+
+            <button onclick="submitConfirmed()">Submit</button>
+            <button onclick="closePopup()">Cancel</button>
+
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+<script src="manage_hours.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Basic meta settings -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us</title>
+    <!-- Link to external stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="top-header">
+        <h1 class="site-title">Contact Us</h1>
+
+        <div class="top-actions">
+            <a href="create-account.html" class="btn create-btn">Create Account</a>
+            <a href="login.html" class="btn login-btn">Login</a>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main content -->
+    <main>
+        <section id="contact-form-section">
+            <h2>We’d love to hear from you!</h2>
+            <p>Please fill out the form below, and we’ll get back to you as soon as possible.</p>
+
+            <!-- Contact form -->
+            <form id="contact-form">
+                <label for="first-name">First Name:</label>
+                <input type="text" id="first-name" name="first-name" placeholder="Your first name" required>
+
+                <label for="last-name">Last Name:</label>
+                <input type="text" id="last-name" name="last-name" placeholder="Your last name" required>
+
+                <label for="email">Email Address:</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" required>
+
+                <label for="message">Questions / Comments:</label>
+                <textarea id="message" name="message" rows="5" placeholder="Type your message here..."
+                    required></textarea>
+
+                <button type="submit">Submit</button>
+            </form>
+
+            <!-- Confirmation message area (hidden by default) -->
+            <p id="confirmation-message" style="display:none; color:green; font-weight:bold;">
+                Thank you! Your message has been submitted successfully.
+            </p>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 Example Company. All rights reserved.</p>
+    </footer>
+
+    <!-- Link to external JavaScript file -->
+    <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+
+</html>

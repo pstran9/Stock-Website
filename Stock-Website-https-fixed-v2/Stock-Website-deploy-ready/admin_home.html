@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Home</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Top header -->
+    <header class="top-header">
+        <h1 class="site-title">Admin Dashboard</h1>
+        <div class="top-actions">
+            <a href="admin_home.html" class="btn login-btn">Home</a>
+            <a href="admin_edit_stocks.html" class="btn create-btn">Edit Stocks</a>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="admin_home.html">Admin Home</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="admin_edit_stocks.html">Manage Stocks</a></li>
+            <li><a href="admin_manage_hours.html">Manage Hours</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-wrapper">
+        <header class="page-header">
+            <h1>Stock Market Overview</h1>
+            <p>Quick view of live market data, trading hours, and holidays.</p>
+        </header>
+
+        <!-- Stock table + Edit button -->
+        <section class="table-section">
+            <div class="table-header-row">
+                <h2>Market Stocks</h2>
+                <a href="admin_edit_stocks.html" class="btn login-btn edit-table-btn">
+                    Edit
+                </a>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Stock Name</th>
+                            <th>Sector</th>
+                            <th>Price ($)</th>
+                            <th>Change</th>
+                            <th>% Change</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminHomeStockTableBody">
+                        <!-- Up to 15 rows injected by admin_home.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Calendar + Market hours -->
+        <section class="admin-hours-layout">
+            <!-- Calendar -->
+            <div class="admin-card">
+                <h2>Market Calendar</h2>
+                <p id="calendarMonthLabel" class="note"></p>
+                <div class="calendar-grid" id="marketCalendar">
+                    <!-- Calendar days injected by admin_home.js -->
+                </div>
+                <p class="note">
+                    Holiday hours are reflected as “Closed” or shortened days.
+                </p>
+            </div>
+
+            <!-- Market hours + Holiday hours -->
+            <div class="admin-card">
+                <div class="market-hours-header">
+                    <h2>Market Hours</h2>
+                    <a href="admin_edit_hours.html" class="btn login-btn">Edit</a>
+                </div>
+
+                <div class="market-hours-table" id="marketHoursTable">
+                    <!-- Weekly hours injected by admin_home.js -->
+                </div>
+
+                <div class="holiday-section-header">
+                    <h2>Holiday Hours</h2>
+                    <a href="admin_edit_hours.html#holidays" class="btn login-btn edit-table-btn">
+                        Edit
+                    </a>
+                </div>
+
+                <div class="holiday-hours-list" id="holidayHoursList">
+                    <!-- Holiday hours injected by admin_home.js -->
+                </div>
+            </div>
+
+        </section>
+    </main>
+
+    <!-- Javascript File -->
+    <script src="config.js"></script>
+<script src="main.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>User Home</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="top-header">
+    <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+    <div class="top-actions">
+      <a href="create-account.html" class="btn create-btn">Create Account</a>
+      <a href="login.html" class="btn login-btn">Login</a>
+    </div>
+  </header>
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="user_home.html">Dashboard</a></li>
+      <li><a href="user_portfolio.html">Portfolio</a></li>
+      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="user_transactions.html">Transactions</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+  <main class="page-wrapper">
+    <div class="page-header">
+      <h1>Welcome to Your Dashboard</h1>
+      <p>Manage your portfolio and cash balance below.</p>
+    </div>
+
+    <!-- Purchasing Power Section -->
+    <section class="admin-section">
+      <h2>Purchasing Power</h2>
+      <div class="purchasing-power-display">
+        <div class="power-amount">$<span id="cashBalance">0</span></div>
+        <p class="power-note">Available cash for trading</p>
+      </div>
+    </section>
+
+    <!-- Portfolio Pie Chart Section -->
+    <section class="table-section">
+      <h2 id="portfolioTitle">Portfolio Allocation (Loading...)</h2>
+      <div class="pie-chart-container">
+        <canvas id="portfolioPie" width="400" height="400"></canvas>
+        <div class="pie-legend" id="pieLegend">
+          <!-- Populated dynamically by JS -->
+        </div>
+      </div>
+    </section>
+
+    <!-- Add and Withdraw Funds Buttons -->
+    <section class="admin-section">
+      <h2>Manage Funds</h2>
+      <div class="funds-buttons-container">
+        <a href="user_add_funds.html" class="btn login-btn">Add Funds</a>
+        <a href="user_withdraw_funds.html" class="btn withdraw-btn">Withdraw Funds</a>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

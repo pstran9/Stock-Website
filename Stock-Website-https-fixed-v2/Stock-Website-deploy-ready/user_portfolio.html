@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Your Portfolio</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="top-header">
+    <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+    <div class="top-actions">
+      <a href="create-account.html" class="btn create-btn">Create Account</a>
+      <a href="login.html" class="btn login-btn">Login</a>
+    </div>
+  </header>
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="user_home.html">Dashboard</a></li>
+      <li><a href="user_portfolio.html">Portfolio</a></li>
+      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="user_transactions.html">Transactions</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+  <main class="page-wrapper">
+    <div class="page-header">
+      <h1>Your Portfolio</h1>
+      <p>Stocks you currently own</p>
+    </div>
+
+    <!-- Portfolio Controls with Buttons-->
+    <section class="table-section">
+      <div class="controls">
+        <div class="control-group portfolio-controls-left">
+          <label>Total Portfolio Value</label>
+          <div id="totalPortfolioValue" style="font-weight: bold; color: #0369a1;">Loading...</div>
+        </div>
+        
+        <div class="control-group portfolio-controls-right">
+          <label>Quick Actions</label>
+          <div class="portfolio-action-buttons">
+            <a href="user_buy_stocks.html" class="btn login-btn">Buy Stocks</a>
+            <a href="user_sell_stocks.html" class="btn withdraw-btn">Sell Stocks</a>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Portfolio Table -->
+      <div class="table-wrapper">
+        <table id="stockTable">
+          <thead>
+            <tr>
+              <th>Stock Name</th>
+              <th>Ticker</th>
+              <th>Price Per Stock</th>
+              <th>Shares Owned</th>
+              <th>Total Value</th>
+            </tr>
+          </thead>
+          <tbody id="portfolioTableBody">
+            <tr>
+              <td colspan="5" style="text-align: center;">Loading portfolio...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

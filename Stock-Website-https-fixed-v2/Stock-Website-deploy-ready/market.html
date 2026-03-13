@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Stock Market</title>
+
+    <!-- Link to external CSS file -->
+    <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+    <!-- Header -->
+    <header class="top-header">
+        <h1 class="site-title">Stock Market</h1>
+
+        <div class="top-actions">
+            <a href="create-account.html" class="btn create-btn">Create Account</a>
+            <a href="login.html" class="btn login-btn">Login</a>
+        </div>
+    </header>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main content wrapper -->
+    <main class="page-wrapper">
+        <!-- Page title and summary -->
+        <section class="page-header">
+            <h1>Stock Market</h1>
+            <p>
+                View live‑like stock prices, daily changes, and perform mock buy/sell actions.
+                This is demo data for UI purposes only.
+            </p>
+        </section>
+
+        <!-- Search and filters section -->
+        <section class="controls">
+            <!-- Search input: filters table rows in real time -->
+            <div class="control-group">
+                <label for="searchInput">Search (name or ticker):</label>
+                <input type="text" id="searchInput" placeholder="e.g. AAPL, Tesla, Bank" />
+            </div>
+
+            <!-- Example dropdown for filtering by sector -->
+            <div class="control-group">
+                <label for="sectorFilter">Sector:</label>
+                <select id="sectorFilter">
+                    <option value="all">All</option>
+                    <option value="Technology">Technology</option>
+                    <option value="Finance">Finance</option>
+                    <option value="Energy">Energy</option>
+                    <option value="Consumer">Consumer</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Stock table section -->
+        <section class="table-section">
+            <div class="table-wrapper">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Ticker</th>
+                            <th>Stock Name</th>
+                            <th>Sector</th>
+                            <th>Price ($)</th>
+                            <th>Change</th>
+                            <th>% Change</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Rows will be injected here by main.js -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+
+        <!-- Selected stock details section -->
+        <section class="details-section">
+            <h2>Selected Stock Details</h2>
+            <p id="detailsPlaceholder">
+                Click on a stock row to see more details here.
+            </p>
+            <div id="stockDetails" class="details-card hidden">
+                <!-- These fields are populated dynamically by JavaScript -->
+                <p><strong>Ticker:</strong> <span id="detailSymbol"></span></p>
+                <p><strong>Stock Name:</strong> <span id="detailCompany"></span></p>
+                <p><strong>Sector:</strong> <span id="detailSector"></span></p>
+                <p><strong>Price:</strong> $<span id="detailPrice"></span></p>
+                <p><strong>Change:</strong> <span id="detailChange"></span></p>
+                <p><strong>% Change:</strong> <span id="detailPercent"></span></p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Simple footer -->
+    <footer class="footer">
+        <p>&copy; 2026 MyStockSite. All rights reserved.</p>
+    </footer>
+
+    <!-- Link to external JavaScript file (at end for performance) -->
+    <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+
+</html>

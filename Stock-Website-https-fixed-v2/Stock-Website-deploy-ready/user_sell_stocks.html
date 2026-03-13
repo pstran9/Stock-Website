@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sell Stocks</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+  <header class="top-header">
+    <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+    <div class="top-actions">
+      <a href="create-account.html" class="btn create-btn">Create Account</a>
+      <a href="login.html" class="btn login-btn">Login</a>
+    </div>
+  </header>
+
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="user_home.html">Dashboard</a></li>
+      <li><a href="user_portfolio.html">Portfolio</a></li>
+      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="user_transactions.html">Transactions</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+  <main class="page-wrapper">
+    <div class="page-header">
+      <h1>Sell Stocks</h1>
+      <p>Select stock and enter shares to sell</p>
+    </div>
+
+    <!-- Sell Form -->
+    <section class="table-section">
+      <form id="sellForm" class="form-grid">
+        <div class="control-group">
+          <label for="stockSelect">Select Stock to Sell</label>
+          <select id="stockSelect" required>
+            <option value="">Choose a stock...</option>
+          </select>
+        </div>
+
+        <div class="control-group">
+          <label id="stockInfo" style="font-weight: bold; color: #0369a1;"></label>
+        </div>
+
+        <div class="control-group">
+          <label for="sharesToSell">Enter number of shares to sell:</label>
+          <input type="number" id="sharesToSell" min="1" required>
+          <div id="sharesError" class="error-message" style="display: none; color: #dc2626;"></div>
+        </div>
+
+        <div class="control-group">
+          <button type="submit" class="btn-sell" style="width: 100%; margin-top: 20px;">Sell Shares</button>
+        </div>
+      </form>
+    </section>
+  </main>
+
+  <!-- Confirmation Modal -->
+  <div id="confirmModal" class="modal-overlay" style="display: none;">
+    <div class="modal-content">
+      <h2>Confirm Sell Order</h2>
+      <div id="confirmDetails" class="confirm-details"></div>
+      <div class="modal-actions">
+        <button id="confirmSellBtn" class="btn login-btn">Confirm Sell</button>
+        <button id="cancelSellBtn" class="btn withdraw-btn">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

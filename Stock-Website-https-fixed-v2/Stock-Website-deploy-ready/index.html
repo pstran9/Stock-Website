@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Welcome</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- Link to external CSS file -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+  <header class="top-header">
+    <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+
+    <div class="top-actions">
+      <a href="create-account.html" class="btn create-btn">Create Account</a>
+      <a href="login.html" class="btn login-btn">Login</a>
+    </div>
+  </header>
+
+  <!-- Navigation Bar -->
+  <nav class="navbar">
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="market.html">Stock Market</a></li>
+      <li><a href="about.html">About Us</a></li>
+      <li><a href="contact.html">Contact Us</a></li>
+    </ul>
+  </nav>
+
+
+  <!-- Popular Stocks (Admin Configured) -->
+  <section class="stock-section">
+    <h2>Popular Stocks</h2>
+    <!-- This list will be filled by JavaScript -->
+    <ul id="stock-list"></ul>
+  </section>
+
+  <script src="config.js"></script>
+<script src="main.js"></script>
+
+</body>
+
+</html>

@@ -1,0 +1,70 @@
+-- Strong schema for Stock Trading System (MySQL 8+)
+
+CREATE TABLE IF NOT EXISTS users (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  username VARCHAR(50) NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  role ENUM('USER','ADMIN') NOT NULL DEFAULT 'USER',
+  cash_balance DECIMAL(12,2) NOT NULL DEFAULT 10000.00,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS stocks (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  ticker VARCHAR(10) NOT NULL UNIQUE,
+  name VARCHAR(255) NOT NULL,
+  sector VARCHAR(100) NOT NULL DEFAULT '',
+  last_price DECIMAL(12,4) NOT NULL DEFAULT 10.0000,
+  volatility DECIMAL(10,6) NOT NULL DEFAULT 0.020000,
+  drift DECIMAL(10,6) NOT NULL DEFAULT 0.000100,
+  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS positions (
+  user_id BIGINT UNSIGNED NOT NULL,
+  stock_id BIGINT UNSIGNED NOT NULL,
+  shares DECIMAL(18,6) NOT NULL DEFAULT 0,
+  PRIMARY KEY (user_id, stock_id),
+  CONSTRAINT fk_positions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_positions_stock FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS transactions (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  user_id BIGINT UNSIGNED NOT NULL,
+  stock_id BIGINT UNSIGNED NOT NULL,
+  type ENUM('BUY','SELL') NOT NULL,
+  shares DECIMAL(18,6) NOT NULL,
+  price DECIMAL(12,4) NOT NULL,
+  total_amount DECIMAL(12,2) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_transactions_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_transactions_stock FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE RESTRICT,
+  INDEX idx_transactions_user_created (user_id, created_at)
+) ENGINE=InnoDB;
+
+-- Market hours (UTC, simple model)
+CREATE TABLE IF NOT EXISTS market_hours (
+  day_of_week TINYINT NOT NULL, -- 1=Mon ... 5=Fri (UTC)
+  open_time_utc TIME NOT NULL,
+  close_time_utc TIME NOT NULL,
+  PRIMARY KEY (day_of_week)
+) ENGINE=InnoDB;
+
+-- Holidays stored in DB so you can update without redeploy
+CREATE TABLE IF NOT EXISTS market_holidays (
+  holiday_date DATE NOT NULL PRIMARY KEY,
+  name VARCHAR(128) NOT NULL
+) ENGINE=InnoDB;
+
+-- Price history for charting
+CREATE TABLE IF NOT EXISTS price_history (
+  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  stock_id BIGINT UNSIGNED NOT NULL,
+  price DECIMAL(12,4) NOT NULL,
+  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_price_history_stock FOREIGN KEY (stock_id) REFERENCES stocks(id) ON DELETE CASCADE,
+  INDEX idx_price_history_stock_time (stock_id, created_at)
+) ENGINE=InnoDB;

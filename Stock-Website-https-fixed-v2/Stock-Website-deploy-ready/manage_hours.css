@@ -1,0 +1,28 @@
+@import url("styles.css");
+
+.page-wrapper {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+#hoursTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+
+#hoursTable th,
+#hoursTable td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: left;
+}
+
+.holiday-section {
+  margin-top: 24px;
+}
+
+.popup {
+  display: none;
+}

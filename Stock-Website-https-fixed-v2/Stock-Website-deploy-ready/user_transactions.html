@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>User Transactions</title>
+
+    <!-- Your single shared stylesheet -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <!-- Top header (reuses your existing classes) -->
+    <header class="top-header">
+        <h1 class="site-title">User Transactions</h1>
+        <div class="top-actions">
+            <a href="user_home.html" class="btn login-btn">Dashboard</a>
+            <a href="user_portfolio.html" class="btn create-btn">Portfolio</a>
+        </div>
+    </header>
+
+    <!-- Navigation bar -->
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="user_home.html">Dashboard</a></li>
+            <li><a href="user_portfolio.html">Portfolio</a></li>
+            <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+            <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="user_transactions.html">Transactions</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-wrapper">
+        <header class="page-header">
+            <h1>Transaction History</h1>
+            <p>View, search, and sort your buy and sell activity.</p>
+        </header>
+
+        <!-- Controls: search + sort -->
+        <section class="controls transactions-controls">
+            <div class="control-group">
+                <label for="transactionSearch">Search by stock name or ticker</label>
+                <div class="transaction-search-row">
+                    <input type="text" id="transactionSearch" placeholder="e.g. Apple or AAPL">
+                    <button id="transactionSearchBtn" class="btn login-btn">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="control-group sort-control-group">
+                <label for="sortOrder">Sort by date</label>
+                <select id="sortOrder">
+                    <option value="newest">Newest to Oldest</option>
+                    <option value="oldest">Oldest to Newest</option>
+                </select>
+            </div>
+        </section>
+
+        <!-- Transactions table -->
+        <section class="table-section">
+            <h2>User Transactions</h2>
+            <div class="table-wrapper">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Time</th>
+                            <th>Stock Name</th>
+                            <th>Ticker</th>
+                            <th>Total Shares</th>
+                            <th>Total Price</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionsTableBody">
+                        <!-- Populated by JS -->
+                    </tbody>
+                </table>
+            </div>
+            <p id="transactionsEmptyMessage" class="note" style="display:none;">
+                No transactions found.
+            </p>
+        </section>
+    </main>
+
+    <!-- Shared JS bundle -->
+    <script src="config.js"></script>
+<script src="main.js"></script>
+
+</body>
+
+</html>

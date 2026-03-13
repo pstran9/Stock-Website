@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Buy Stocks</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <header class="top-header">
+        <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+        <div class="top-actions">
+            <a href="create-account.html" class="btn create-btn">Create Account</a>
+            <a href="login.html" class="btn login-btn">Login</a>
+        </div>
+    </header>
+
+    <nav class="navbar">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="user_home.html">Dashboard</a></li>
+            <li><a href="user_portfolio.html">Portfolio</a></li>
+            <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+            <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="user_transactions.html">Transactions</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
+
+    <main class="page-wrapper">
+        <div class="page-header">
+            <h1>Available Stocks</h1>
+            <p>Select a stock to buy</p>
+        </div>
+
+        <!-- Table of available stocks -->
+        <section class="table-section">
+            <div class="controls">
+                <div class="control-group">
+                    <label>Sector Filter</label>
+                    <select id="stockFilter">
+                        <option value="all">All Sectors</option>
+                        <option value="Technology">Technology</option>
+                        <option value="Finance">Finance</option>
+                        <option value="Energy">Energy</option>
+                        <option value="Consumer">Consumer</option>
+                        <option value="Healthcare">Healthcare</option>
+                        <option value="Industrial">Industrial</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="table-wrapper">
+                <table id="stockTable">
+                    <thead>
+                        <tr>
+                            <th>Stock Name</th>
+                            <th>Ticker</th>
+                            <th>Sector</th>
+                            <th>Price</th>
+                            <th>Price Change</th>
+                            <th>Price Change %</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stocksTableBody">
+                        <tr>
+                            <td colspan="7" style="text-align: center;">Loading stocks...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <script src="config.js"></script>
+<script src="main.js"></script>
+</body>
+
+</html>
