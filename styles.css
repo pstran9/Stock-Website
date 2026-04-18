@@ -41,12 +41,17 @@ body {
   display: flex;
   align-items: center;
   padding: 10px 20px;
+  height: 80px;
+  overflow: hidden;
 }
 
 .site-logo {
-  height: 60px;
+  max-height: 60px;
+  max-width: 200px;
   width: auto;
+  height: auto;
   display: block;
+  object-fit: contain;
 }
 
 /* ===== MAIN CONTENT SPACING ===== */
