@@ -10,27 +10,34 @@
 
 <body>
     <header class="top-header">
-        <h1 class="site-title">Cloud-Based Stock Trading Simulation</h1>
+        <h1 class="site-title">AJP Investments</h1>
+
         <div class="top-actions">
-            <a href="create-account.html" class="btn create-btn">Create Account</a>
+            <a href="create_account.html" class="btn create-btn">Create Account</a>
             <a href="login.html" class="btn login-btn">Login</a>
         </div>
+
+        <header class="site-header">
+            <img src="https://stocktrader-frontend-pt-tm20.s3.us-east-1.amazonaws.com/assets/AJPLogo.png"
+                alt="Company Logo" class="site-logo">
+        </header>
+
     </header>
 
     <nav class="navbar">
-    <ul>
-      <li><a href="index.html">Home</a></li>
-      <li><a href="user_home.html">Dashboard</a></li>
-      <li><a href="user_portfolio.html">Portfolio</a></li>
-      <li><a href="user_deposit.html">Deposit Funds</a></li>
-      <li><a href="user_withdraw.html">Withdraw Funds</a></li>
-      <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
-      <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
-      <li><a href="market.html">Stock Market</a></li>
-      <li><a href="user_transactions.html">Transactions</a></li>
-      <li><a href="contact.html">Contact Us</a></li>
-    </ul>
-  </nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li><a href="user_home.html">Dashboard</a></li>
+            <li><a href="user_portfolio.html">Portfolio</a></li>
+            <li><a href="user_deposit.html">Deposit Funds</a></li>
+            <li><a href="user_withdraw.html">Withdraw Funds</a></li>
+            <li><a href="user_buy_stocks.html">Buy Stocks</a></li>
+            <li><a href="user_sell_stocks.html">Sell Stocks</a></li>
+            <li><a href="market.html">Stock Market</a></li>
+            <li><a href="user_transactions.html">Transactions</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
 
     <main class="page-wrapper">
         <div class="page-header">
@@ -56,14 +63,14 @@
             </div>
 
             <!-- Live Quote -->
-        <section class="admin-section">
-            <h2>Live Quote</h2>
-            <div id="stockQuoteCard">
-                <p>Price: <span id="quotePrice">--</span></p>
-                <p>Change: <span id="quoteChange">--</span></p>
-                <p>Percent: <span id="quotePercent">--</span></p>
-            </div>
-        </section>
+            <section class="admin-section">
+                <h2>Live Quote</h2>
+                <div id="stockQuoteCard">
+                    <p>Price: <span id="quotePrice">--</span></p>
+                    <p>Change: <span id="quoteChange">--</span></p>
+                    <p>Percent: <span id="quotePercent">--</span></p>
+                </div>
+            </section>
 
             <div class="table-wrapper">
                 <table id="stockTable">
