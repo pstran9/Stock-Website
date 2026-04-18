@@ -37,6 +37,18 @@ body {
   font-size: 14px;
 }
 
+.site-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+}
+
+.site-logo {
+  height: 60px;
+  width: auto;
+  display: block;
+}
+
 /* ===== MAIN CONTENT SPACING ===== */
 main {
   padding-top: 20px;
