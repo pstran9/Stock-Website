@@ -169,7 +169,7 @@ function renderPopularStocks() {
   });
 }
 
-function showDetails(stock) {
+async function showDetails(stock) {
   if (elements.detailsPlaceholder) {
     elements.detailsPlaceholder.classList.add("hidden");
   }
@@ -192,6 +192,9 @@ function showDetails(stock) {
   if (detailIds.price) detailIds.price.textContent = `$${stock.price.toFixed(2)}`;
   if (detailIds.change) detailIds.change.textContent = stock.change.toFixed(2);
   if (detailIds.percent) detailIds.percent.textContent = `${stock.percentChange.toFixed(2)}%`;
+
+  const quote = await loadStockQuote(stock.ticker || stock.symbol);
+  renderStockQuote(quote);
 }
 
 function renderTable(data = stocks) {
@@ -1137,3 +1140,28 @@ document.addEventListener("DOMContentLoaded", async () => {
   await loadAdminHomeStocks();
   await loadMarketHours();
 });
+
+/*
+Added code to call the random generator
+*/
+
+async function loadStockQuote(ticker) {
+  try {
+    const response = await apiFetch(`/api/stocks/${encodeURIComponent(ticker)}/quote`);
+    if (!response.ok) throw new Error("Failed to load quote");
+    return await response.json();
+  } catch (error) {
+    console.error("Quote load error:", error);
+    return null;
+  }
+}
+
+function renderStockQuote(quote) {
+  const priceEl = document.getElementById("quotePrice");
+  const changeEl = document.getElementById("quoteChange");
+  const percentEl = document.getElementById("quotePercent");
+
+  if (priceEl) priceEl.textContent = quote?.price ?? quote?.currentPrice ?? "N/A";
+  if (changeEl) changeEl.textContent = quote?.change ?? quote?.priceChange ?? "N/A";
+  if (percentEl) percentEl.textContent = quote?.percentChange ?? "N/A";
+}

@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Admin – Stock Management</title>
     <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body>
     <!-- Header -->
     <header class="top-header">
@@ -72,6 +74,16 @@
             </form>
         </section>
 
+        <!-- Live Quote -->
+        <section class="admin-section">
+            <h2>Live Quote</h2>
+            <div id="stockQuoteCard">
+                <p>Price: <span id="quotePrice">--</span></p>
+                <p>Change: <span id="quoteChange">--</span></p>
+                <p>Percent: <span id="quotePercent">--</span></p>
+            </div>
+        </section>
+
         <!-- Current Stocks Table -->
         <section class="admin-section">
             <h2>Current Stocks (<span id="stockCount">0</span>)</h2>
@@ -97,7 +109,8 @@
                     </tbody>
                 </table>
             </div>
-            <p class="note">Note: Data persists only during this browser session. Add a backend later for permanent storage.</p>
+            <p class="note">Note: Data persists only during this browser session. Add a backend later for permanent
+                storage.</p>
         </section>
     </main>
 
@@ -109,4 +122,5 @@
     <!-- Call main.js -->
     <script src="main.js"></script>
 </body>
+
 </html>

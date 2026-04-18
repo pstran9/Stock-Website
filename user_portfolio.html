@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>Your Portfolio</title>
@@ -44,7 +45,7 @@
           <label>Total Portfolio Value</label>
           <div id="totalPortfolioValue" style="font-weight: bold; color: #0369a1;">Loading...</div>
         </div>
-        
+
         <div class="control-group portfolio-controls-right">
           <label>Quick Actions</label>
           <div class="portfolio-action-buttons">
@@ -53,7 +54,7 @@
           </div>
         </div>
       </div>
-      
+
       <!-- Portfolio Table -->
       <div class="table-wrapper">
         <table id="stockTable">
@@ -73,9 +74,21 @@
           </tbody>
         </table>
       </div>
+
+      <!-- Live Quote -->
+      <section class="admin-section">
+        <h2>Live Quote</h2>
+        <div id="stockQuoteCard">
+          <p>Price: <span id="quotePrice">--</span></p>
+          <p>Change: <span id="quoteChange">--</span></p>
+          <p>Percent: <span id="quotePercent">--</span></p>
+        </div>
+      </section>
+
     </section>
   </main>
 
   <script src="main.js"></script>
 </body>
+
 </html>
