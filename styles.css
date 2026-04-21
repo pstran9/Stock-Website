@@ -10,48 +10,39 @@ body {
   display: flex;
   align-items: center;
   padding: 10px 20px;
-  position: relative;
-  height: 60px; 
+  min-height: 90px;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb; /* optional but looks cleaner */
 }
 
+/* LEFT SIDE: logo + title */
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* LOGO */
+.site-logo {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
+  flex-shrink: 0;
+}
+
+/* TITLE */
 .site-title {
   margin: 0;
   font-size: 24px;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100%; 
+  white-space: nowrap;
 }
 
+/* RIGHT SIDE: buttons */
 .top-actions {
   display: flex;
   gap: 10px;
-  position: absolute;
-  right: 20px;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-.top-actions .btn {
-  padding: 6px 12px;
-  font-size: 14px;
-}
-
-.site-header {
-  display: flex;
-  align-items: center;
-  padding: 10px 20px;
-  height: 80px;
-  overflow: hidden;
-}
-
-.site-logo {
-  max-height: 60px;
-  max-width: 200px;
-  width: auto;
-  height: auto;
-  display: block;
-  object-fit: contain;
+  margin-left: auto; /* 🔥 THIS is the key fix */
 }
 
 /* ===== MAIN CONTENT SPACING ===== */
