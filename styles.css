@@ -11,18 +11,66 @@ body {
   align-items: center;
   padding: 10px 20px;
   min-height: 90px;
-  background: #fff;
-  border-bottom: 1px solid #e5e7eb; /* optional but looks cleaner */
+
+  background: linear-gradient(135deg, #065f46, #047857);
+
+  border-bottom: 1px solid #e5e7eb;
+
+  position: relative;
+  overflow: hidden;
 }
 
-/* LEFT SIDE: logo + title */
+.top-header .wave {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.top-header .wave span {
+  position: absolute;
+  width: 200%;
+  height: 200%;
+  top: -150%;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.top-header .wave span:nth-child(1) {
+  border-radius: 45%;
+  background: rgba(255, 255, 255, 0.05);
+  animation: waveRotate 18s linear infinite;
+}
+
+.top-header .wave span:nth-child(2) {
+  border-radius: 40%;
+  background: rgba(16, 185, 129, 0.08);
+  animation: waveRotate 28s linear infinite;
+}
+
+.top-header .wave span:nth-child(3) {
+  border-radius: 42%;
+  background: rgba(255, 255, 255, 0.04);
+  animation: waveRotate 40s linear infinite;
+}
+
+@keyframes waveRotate {
+  0% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotate(360deg);
+  }
+}
+
 .logo-area {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0px;
+
+  position: relative;
+  z-index: 1;
 }
 
-/* LOGO */
 .site-logo {
   width: 60px;
   height: 60px;
@@ -31,18 +79,22 @@ body {
   flex-shrink: 0;
 }
 
-/* TITLE */
 .site-title {
   margin: 0;
   font-size: 24px;
+  font-weight: 600;
+  line-height: 40px;
   white-space: nowrap;
+  color: white;
 }
 
-/* RIGHT SIDE: buttons */
 .top-actions {
   display: flex;
   gap: 10px;
-  margin-left: auto; /* 🔥 THIS is the key fix */
+  margin-left: auto;
+
+  position: relative;
+  z-index: 1;
 }
 
 /* ===== MAIN CONTENT SPACING ===== */
@@ -76,23 +128,76 @@ input[type="password"] {
 }
 
 /* ===== BUTTON STYLING ===== */
-button,
+
 .btn {
-  padding: 10px 20px;
-  margin: 10px;
+  display: inline-block;
+  text-decoration: none;
   font-size: 16px;
   cursor: pointer;
-  border: none;
 }
 
 .create-btn {
-  background-color: #4CAF50;
-  color: white;
+  background-color: #c2fbd7;
+  color: #166534;
+  border-radius: 100px;
+
+  padding: 8px 22px; 
+
+  box-shadow:
+    rgba(44, 187, 99, .2) 0 -25px 18px -14px inset,
+    rgba(44, 187, 99, .15) 0 1px 2px,
+    rgba(44, 187, 99, .15) 0 2px 4px,
+    rgba(44, 187, 99, .15) 0 4px 8px,
+    rgba(44, 187, 99, .15) 0 8px 16px,
+    rgba(44, 187, 99, .15) 0 16px 32px;
+
+  transition: all 0.25s ease;
+  border: none;
+}
+
+
+.create-btn:hover {
+  box-shadow:
+    rgba(44,187,99,.35) 0 -25px 18px -14px inset,
+    rgba(44,187,99,.25) 0 1px 2px,
+    rgba(44,187,99,.25) 0 2px 4px,
+    rgba(44,187,99,.25) 0 4px 8px,
+    rgba(44,187,99,.25) 0 8px 16px,
+    rgba(44,187,99,.25) 0 16px 32px;
+
+  transform: scale(1.05);
 }
 
 .login-btn {
-  background-color: #008CBA;
-  color: white;
+  background-color: #4daeef;
+  color: #163d65;
+  border-radius: 100px;
+
+  padding: 8px 22px; 
+
+  box-shadow:
+    rgba(59, 130, 246, 0.25) 0 -25px 18px -14px inset,
+    rgba(59, 130, 246, 0.15) 0 1px 2px,
+    rgba(59, 130, 246, 0.15) 0 2px 4px,
+    rgba(59, 130, 246, 0.15) 0 4px 8px,
+    rgba(59, 130, 246, 0.15) 0 8px 16px,
+    rgba(59, 130, 246, 0.15) 0 16px 32px;
+
+  transition: all 0.25s ease;
+  border: none;
+}
+
+
+.login-btn:hover {
+  box-shadow:
+    rgba(59, 130, 246, 0.35) 0 -25px 18px -14px inset,
+    rgba(59, 130, 246, 0.25) 0 1px 2px,
+    rgba(59, 130, 246, 0.25) 0 2px 4px,
+    rgba(59, 130, 246, 0.25) 0 4px 8px,
+    rgba(59, 130, 246, 0.25) 0 8px 16px,
+    rgba(59, 130, 246, 0.25) 0 16px 32px;
+
+  transform: scale(1.05);
 }
 
 form button[type="submit"] {
@@ -103,32 +208,99 @@ form button[type="submit"] {
 
 /* ===== NAVIGATION BAR ===== */
 .navbar {
-  background-color: #333;
+  background: linear-gradient(135deg, #14532d, #1B842C);
+  position: relative;
   overflow: hidden;
 }
 
+/* ===== EDGE WAVE LAYERS ===== */
+.navbar::before,
+.navbar::after {
+  content: "";
+  position: absolute;
+  top: -200%;
+  left: 50%;
+  width: 260%;
+  height: 260%;
+  transform: translateX(-50%);
+  border-radius: 45%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* soft white glow wave */
+.navbar::before {
+  background: rgba(255, 255, 255, 0.05);
+  animation: navWave 60s linear infinite;
+}
+
+/* green energy wave */
+.navbar::after {
+  background: rgba(16, 185, 129, 0.04);
+  animation: navWave 90s linear infinite;
+}
+
+/* ===== EDGE FADE (KEY FIX) ===== */
+.navbar::before {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+
+  -webkit-mask-image: linear-gradient(
+    to right,
+    transparent 0%,
+    black 10%,
+    black 90%,
+    transparent 100%
+  );
+}
+
+/* keep content above waves */
 .navbar ul {
   list-style: none;
   margin: 0;
   padding: 0;
+
   display: flex;
   justify-content: center;
   align-items: center;
+
+  position: relative;
+  z-index: 2;
+
+  flex-wrap: wrap; 
+  gap: 6px;
 }
 
+/* navigation bar spacing */
 .navbar li {
-  padding: 14px 20px;
+  padding: 14px 18px;
+  white-space: nowrap;
 }
 
 .navbar a {
   color: white;
   text-decoration: none;
-  font-weight: bold;
+  font-weight: 600;
+  transition: 0.2s ease;
 }
 
 .navbar a:hover {
-  background-color: #575757;
-  border-radius: 4px;
+  color: #bbf7d0;
+}
+
+/* slow subtle motion */
+@keyframes navWave {
+  0% {
+    transform: translateX(-50%) rotate(0deg);
+  }
+  100% {
+    transform: translateX(-50%) rotate(360deg);
+  }
 }
 
 /* ===== POPULAR STOCKS (HOME PAGE) ===== */
@@ -724,17 +896,14 @@ form button[type="submit"] {
 
 /* ===== USER TRANSACTIONS PAGE STYLES ===== */
 
-/* The container already is flex via .controls */
 .transactions-controls {
   align-items: flex-end; 
 }
 
-/* Push sort group to far right */
 .sort-control-group {
   margin-left: auto;
 }
 
-/* Search input + button on one line */
 .transaction-search-row {
   display: flex;
   gap: 8px;
@@ -745,14 +914,12 @@ form button[type="submit"] {
   flex: 1;
 }
 
-/* In styles.css */
 .transaction-search-row input[type="text"] {
   padding: 8px 10px;          
   font-size: 14px;
   box-sizing: border-box;
 }
 
-/* Make the search button match input height */
 .transaction-search-row button {
   padding: 8px 16px;          
   font-size: 14px;            
